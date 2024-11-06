@@ -36,7 +36,11 @@ const prepareLaunchCell = async ({
   });
   tx.addCellDeps(getSecp256k1CellDep(isMainnet) as ccc.CellDepLike);
   const ckbSigner = newCkbSignerCCC(CKB_PRIVATE_KEY, ckbNetwork(ckbAddress));
-  await tx.completeInputsByCapacity(ckbSigner);
+  // pass `filter` explicitly to ensure type script is empty (although it's the default behavior)
+  await tx.completeInputsByCapacity(ckbSigner, 0, {
+    scriptLenRange: [0, 1],
+    outputDataLenRange: [0, 1],
+  });
   await tx.completeFeeBy(ckbSigner);
   const txHash = await ckbSigner.sendTransaction(tx);
   await ckbSigner.client.waitTransaction(txHash);
