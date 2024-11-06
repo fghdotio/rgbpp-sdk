@@ -60,3 +60,7 @@ export const privateKeyToAddressCCC = async (privateKey: string, network: CKBNet
   const priv = new ccc.SignerCkbPrivateKey(selectClientCCC(network), privateKey);
   return await priv.getRecommendedAddress();
 };
+
+export const newCkbSignerCCC = (privateKey: string, network: CKBNetwork) => {
+  return new ccc.SignerCkbPrivateKey(selectClientCCC(network), privateKey);
+};
