@@ -26,7 +26,7 @@ async function main() {
   );
   // ! AddressType.FullVersion: ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqvarm0tahu0qfkq6ktuf3wd8azaas0h24cs8598c
 
-  console.log((await addressToScriptCCC(await privateKeyToAddressCCC(CKB_SECP256K1_PRIVATE_KEY, 'testnet'))).script);
+  console.log(await addressToScriptCCC(await privateKeyToAddressCCC(CKB_SECP256K1_PRIVATE_KEY, 'testnet')));
 
   // 2. AddressPrefix
 

@@ -52,8 +52,8 @@ export const ckbNetwork = (address: string): CKBNetwork => {
   }
 };
 
-export const addressToScriptCCC = async (address: string) => {
-  return await ccc.Address.fromString(address, selectClientCCC(ckbNetwork(address)));
+export const addressToScriptCCC = async (address: string): Promise<ccc.Script> => {
+  return (await ccc.Address.fromString(address, selectClientCCC(ckbNetwork(address)))).script;
 };
 
 export const privateKeyToAddressCCC = async (privateKey: string, network: CKBNetwork) => {
