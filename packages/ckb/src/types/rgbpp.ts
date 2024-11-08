@@ -105,6 +105,15 @@ export interface AppendWitnessesParams {
   btcTxBytes: Hex;
 }
 
+export interface AppendWitnessesParamsCCC {
+  // CKB raw transaction
+  ckbTx: ccc.Transaction;
+  // The SPV client cell and tx proof which is from BTCAssetsApi
+  rgbppApiSpvProof: RgbppApiSpvProof;
+  // The hex string of btc transaction, refer to https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/ts_src/transaction.ts#L609
+  btcTxBytes: Hex;
+}
+
 export interface AppendPaymasterCellAndSignTxParams {
   // The Secp256k1 private key of the paymaster cells maintainer
   secp256k1PrivateKey: Hex;
@@ -186,6 +195,15 @@ export interface CkbJumpBtcVirtualTxParams {
 export interface UpdateCkbTxWithRealBtcTxIdParams {
   // CKB raw transaction
   ckbRawTx: CKBComponents.RawTransaction;
+  // The BTC transaction id
+  btcTxId: Hex;
+  // True is for BTC and CKB Mainnet, false is for BTC and CKB Testnet
+  isMainnet: boolean;
+}
+
+export interface UpdateCkbTxWithRealBtcTxIdParamsCCC {
+  // CKB raw transaction
+  ckbPartialTx: ccc.Transaction;
   // The BTC transaction id
   btcTxId: Hex;
   // True is for BTC and CKB Mainnet, false is for BTC and CKB Testnet

@@ -1,7 +1,9 @@
 import {
   UpdateCkbTxWithRealBtcTxIdParams,
+  UpdateCkbTxWithRealBtcTxIdParamsCCC,
   AppendPaymasterCellAndSignTxParams,
   AppendWitnessesParams,
+  AppendWitnessesParamsCCC,
   Hex,
   SendCkbTxParams,
 } from '../types';
@@ -25,6 +27,8 @@ import {
   scriptToHash,
   serializeWitnessArgs,
 } from '@nervosnetwork/ckb-sdk-utils';
+
+import { ccc } from '@ckb-ccc/core';
 
 export const buildRgbppUnlockWitness = (
   btcTxBytes: Hex,
@@ -66,6 +70,31 @@ export const appendCkbTxWitnesses = async ({
   const rgbppUnlock = buildRgbppUnlockWitness(btcTxBytes, proof, ckbRawTx.inputs.length, ckbRawTx.outputs.length);
   const rgbppWitness = append0x(serializeWitnessArgs({ lock: rgbppUnlock, inputType: '', outputType: '' }));
   rawTx.witnesses = rawTx.witnesses.map((witness) => (witness === RGBPP_WITNESS_PLACEHOLDER ? rgbppWitness : witness));
+
+  return rawTx;
+};
+
+export const appendCkbTxWitnessesCCC = async ({
+  ckbTx,
+  btcTxBytes,
+  rgbppApiSpvProof,
+}: AppendWitnessesParamsCCC): Promise<ccc.Transaction> => {
+  const rawTx = ckbTx;
+
+  const { spvClient, proof } = transformSpvProof(rgbppApiSpvProof);
+  rawTx.addCellDeps({
+    outPoint: buildSpvClientCellDep(spvClient).outPoint!,
+    depType: buildSpvClientCellDep(spvClient).depType,
+  });
+
+  const rgbppUnlock = buildRgbppUnlockWitness(btcTxBytes, proof, ckbTx.inputs.length, ckbTx.outputs.length);
+  const rgbppWitness = append0x(serializeWitnessArgs({ lock: rgbppUnlock, inputType: '', outputType: '' }));
+  // iterate witnesses and replace RGBPP_WITNESS_PLACEHOLDER with rgbppWitness
+  rawTx.witnesses.forEach((witness, index) => {
+    if (witness === RGBPP_WITNESS_PLACEHOLDER) {
+      rawTx.witnesses[index] = rgbppWitness as ccc.Hex;
+    }
+  });
 
   return rawTx;
 };
@@ -175,4 +204,26 @@ export const updateCkbTxWithRealBtcTxId = ({
     outputs,
   };
   return newRawTx;
+};
+
+export const updateCkbTxWithRealBtcTxIdCCC = ({
+  ckbPartialTx,
+  btcTxId,
+  isMainnet,
+}: UpdateCkbTxWithRealBtcTxIdParamsCCC): ccc.Transaction => {
+  const outputs = ckbPartialTx.outputs.map((output) => {
+    if (isRgbppLockOrBtcTimeLock(output.lock, isMainnet)) {
+      return ccc.CellOutput.from({
+        ...output,
+        lock: {
+          ...output.lock,
+          args: replaceLockArgsWithRealBtcTxId(output.lock.args, btcTxId),
+        },
+      });
+    }
+    return output;
+  });
+  const ckbTx = ckbPartialTx.clone();
+  ckbTx.outputs = outputs;
+  return ckbTx;
 };

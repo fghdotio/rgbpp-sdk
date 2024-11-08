@@ -37,7 +37,6 @@ export const genPartialRgbppCkbTx = async ({
   ownerRgbppLockArgs,
   launchAmount,
   rgbppTokenInfo,
-  ckbFeeRate,
   isMainnet,
   btcTestnetType,
 }: RgbppLaunchPartialCkbTxParams): Promise<RgbppLaunchPartialCkbTxResult> => {
@@ -87,7 +86,7 @@ export const genPartialRgbppCkbTx = async ({
     type: {
       ...getUniqueTypeScript(isMainnet),
       // ! TODO: TMP WORKAROUND, FIXME
-      // ! hardcoded: use inputs[0] to generate TypeID args
+      // * hardcoded: use inputs[0] to generate TypeID args
       args: generateUniqueTypeArgs(
         {
           previousOutput: {
@@ -117,7 +116,8 @@ export const genPartialRgbppCkbTx = async ({
   tx.witnesses = Array(tx.inputs.length).fill('0x');
   tx.witnesses[0] = RGBPP_WITNESS_PLACEHOLDER;
 
-  await tx.completeFeeBy(signer, ckbFeeRate);
+  // * supply fee after real witnesses are set
+  // await tx.completeFeeBy(signer, ckbFeeRate);
 
   // ! TODO: TMP WORKAROUND, FIXME
   const commitment = calculateCommitment({

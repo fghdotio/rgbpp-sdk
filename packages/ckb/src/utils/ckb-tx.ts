@@ -13,6 +13,8 @@ import { encodeRgbppTokenInfo, genBtcTimeLockScript } from './rgbpp';
 import { Collector } from '../collector';
 import { NoLiveCellError } from '../error';
 
+import { ccc } from '@ckb-ccc/core';
+
 export { serializeScript };
 
 export const calculateTransactionFee = (txSize: number, feeRate?: bigint): bigint => {
@@ -185,6 +187,24 @@ export const checkCkbTxInputsCapacitySufficient = async (
       throw new NoLiveCellError('The cell with the specific out point is dead');
     }
     sumInputsCapacity += BigInt(liveCell.output.capacity);
+  }
+  const sumOutputsCapacity = ckbTx.outputs
+    .map((output) => BigInt(output.capacity))
+    .reduce((prev, current) => prev + current, BigInt(0));
+  return sumInputsCapacity > sumOutputsCapacity;
+};
+
+export const checkCkbTxInputsCapacitySufficientCCC = async (
+  ckbTx: ccc.Transaction,
+  signer: ccc.Signer,
+): Promise<boolean> => {
+  let sumInputsCapacity = BigInt(0);
+  for await (const input of ckbTx.inputs) {
+    const liveCell = await signer.client.getCellLive(input.previousOutput!);
+    if (!liveCell) {
+      throw new NoLiveCellError('The cell with the specific out point is dead');
+    }
+    sumInputsCapacity += BigInt(liveCell.cellOutput.capacity);
   }
   const sumOutputsCapacity = ckbTx.outputs
     .map((output) => BigInt(output.capacity))
