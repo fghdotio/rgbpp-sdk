@@ -89,3 +89,6 @@ prepareLaunchCell({
   btcTxId: 'c1f7fe5d4898194ed8ee5a38597cd28c7981e32e0e6aeb770f3f1b87df21434c',
   rgbppTokenInfo: RGBPP_TOKEN_INFO,
 });
+/* 
+npx tsx xudt/launch/1-prepare-launch.ts
+*/

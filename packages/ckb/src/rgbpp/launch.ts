@@ -1,4 +1,10 @@
-import { RgbppCkbVirtualTx, RgbppLaunchCkbVirtualTxParams, RgbppLaunchVirtualTxResult } from '../types/rgbpp';
+import {
+  RgbppCkbVirtualTx,
+  RgbppLaunchPartialCkbTxParams,
+  RgbppLaunchCkbVirtualTxParams,
+  RgbppLaunchVirtualTxResult,
+  RgbppLaunchPartialCkbTxResult,
+} from '../types/rgbpp';
 import { NoLiveCellError } from '../error';
 import {
   append0x,
@@ -23,6 +29,119 @@ import {
   UNLOCKABLE_LOCK_SCRIPT,
 } from '../constants';
 import { getTransactionSize, scriptToHash } from '@nervosnetwork/ckb-sdk-utils';
+
+import { ccc } from '@ckb-ccc/core';
+
+export const genPartialRgbppCkbTx = async ({
+  signer,
+  ownerRgbppLockArgs,
+  launchAmount,
+  rgbppTokenInfo,
+  ckbFeeRate,
+  isMainnet,
+  btcTestnetType,
+}: RgbppLaunchPartialCkbTxParams): Promise<RgbppLaunchPartialCkbTxResult> => {
+  const rgbppAssetOwnerLock = genRgbppLockScript(ownerRgbppLockArgs, isMainnet, btcTestnetType);
+  console.log('rgbppAssetOwnerLock', rgbppAssetOwnerLock);
+
+  const ckbClient = signer.client;
+  const rgbppLaunchCells: ccc.Cell[] = [];
+  for await (const cell of ckbClient.findCells({
+    script: rgbppAssetOwnerLock,
+    scriptType: 'lock',
+    scriptSearchMode: 'exact',
+    filter: {
+      scriptLenRange: [0, 1],
+      outputDataLenRange: [0, 1],
+    },
+  })) {
+    rgbppLaunchCells.push(cell);
+  }
+
+  if (rgbppLaunchCells.length === 0) {
+    throw new NoLiveCellError('The owner address has no certain live cells available');
+  }
+  console.log(`${rgbppLaunchCells.length} cells found\n`, rgbppLaunchCells);
+  const inputs = rgbppLaunchCells.map(({ outPoint, cellOutput, outputData }) => ({
+    previousOutput: outPoint,
+    cellOutput,
+    outputData: outputData,
+  }));
+
+  const tx = ccc.Transaction.from({ inputs });
+  const inputCapacity = tx.inputs.reduce((sum, input) => sum + input.cellOutput!.capacity, BigInt(0));
+  console.log(`gatheredCapacity: ${inputCapacity}, input count: ${tx.inputs.length}`);
+
+  const infoCellCapacity = calculateRgbppTokenInfoCellCapacity(rgbppTokenInfo, isMainnet);
+  tx.addOutput({
+    lock: genRgbppLockScript(buildPreLockArgs(1), isMainnet, btcTestnetType),
+    type: {
+      ...getXudtTypeScript(isMainnet),
+      args: append0x(scriptToHash(rgbppAssetOwnerLock)),
+    },
+    capacity: BigInt(inputCapacity) - infoCellCapacity,
+  });
+  tx.setOutputDataAt(0, append0x(u128ToLe(launchAmount)));
+  tx.addOutput({
+    lock: genBtcTimeLockScript(UNLOCKABLE_LOCK_SCRIPT, isMainnet, btcTestnetType),
+    type: {
+      ...getUniqueTypeScript(isMainnet),
+      // ! TODO: TMP WORKAROUND, FIXME
+      // ! hardcoded: use inputs[0] to generate TypeID args
+      args: generateUniqueTypeArgs(
+        {
+          previousOutput: {
+            txHash: tx.inputs[0].previousOutput.txHash,
+            index: `0x${tx.inputs[0].previousOutput.index.toString(16)}`,
+          },
+          since: `0x${tx.inputs[0].since.toString(16)}`,
+        },
+        1,
+      ),
+    },
+    capacity: infoCellCapacity,
+  });
+  tx.setOutputDataAt(1, encodeRgbppTokenInfo(rgbppTokenInfo));
+  tx.addCellDeps(
+    (await fetchTypeIdCellDeps(isMainnet, { rgbpp: true, xudt: true, unique: true }, btcTestnetType)).map((dep) => {
+      if (dep.outPoint === null || dep.outPoint === undefined) {
+        throw new Error('dep.outPoint is required');
+      }
+      return {
+        outPoint: dep.outPoint,
+        depType: dep.depType,
+      };
+    }),
+  );
+
+  tx.witnesses = Array(tx.inputs.length).fill('0x');
+  tx.witnesses[0] = RGBPP_WITNESS_PLACEHOLDER;
+
+  await tx.completeFeeBy(signer, ckbFeeRate);
+
+  // ! TODO: TMP WORKAROUND, FIXME
+  const commitment = calculateCommitment({
+    inputs: tx.inputs.map((input) => ({
+      ...input,
+      previousOutput: {
+        ...input.previousOutput,
+        index: `0x${input.previousOutput.index.toString(16)}`,
+      },
+      since: `0x${input.since.toString(16)}`,
+    })),
+    outputs: tx.outputs.map((output) => ({
+      ...output,
+      capacity: append0x(output.capacity.toString(16)),
+    })),
+    outputsData: tx.outputsData,
+  });
+
+  return {
+    partialCkbTx: tx,
+    commitment,
+    needPaymasterCell: false,
+  };
+};
 
 /**
  * Generate the virtual ckb transaction for the btc transfer tx

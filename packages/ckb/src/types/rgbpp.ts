@@ -3,6 +3,8 @@ import { Collector } from '../collector';
 import { IndexerCell } from './collector';
 import { Address, Hex, BTCTestnetType } from './common';
 
+import { ccc } from '@ckb-ccc/core';
+
 export interface ConstructPaymasterParams {
   // The collector that collects CKB live cells and transactions
   collector: Collector;
@@ -252,6 +254,31 @@ export interface RgbppTokenInfo {
   name: string;
   // The symbol of the RGBPP token, and maximum number of characters is 255
   symbol: string;
+}
+
+export interface RgbppLaunchPartialCkbTxParams {
+  // The signer who will sign the CKB transaction
+  signer: ccc.Signer;
+  // The owner RGBPP lock args whose data structure is: out_index | bitcoin_tx_id
+  ownerRgbppLockArgs: Address;
+  // The total amount of RGBPP assets issued
+  launchAmount: bigint;
+  // The RGBPP token info https://github.com/ckb-cell/unique-cell?tab=readme-ov-file#xudt-information
+  rgbppTokenInfo: RgbppTokenInfo;
+  // True is for BTC and CKB Mainnet, false is for BTC and CKB Testnet(see btcTestnetType for details about BTC Testnet)
+  isMainnet: boolean;
+  // The Bitcoin Testnet type including Testnet3 and Signet, default value is Testnet3
+  btcTestnetType?: BTCTestnetType;
+  // The WitnessArgs.lock placeholder bytes array size and the default value is 5000
+  witnessLockPlaceholderSize?: number;
+  // The CKB transaction fee rate, default value is 1100
+  ckbFeeRate?: bigint;
+}
+
+export interface RgbppLaunchPartialCkbTxResult {
+  partialCkbTx: ccc.Transaction;
+  commitment: Hex;
+  needPaymasterCell: boolean;
 }
 
 export interface RgbppLaunchCkbVirtualTxParams {
