@@ -7,20 +7,30 @@ import { getRgbppScriptInfo } from '../constants';
 export class CkbClient {
   network: CkbNetwork;
   private client: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet;
+  private signer: ccc.Signer | undefined;
   rgbppScriptInfo: ccc.ScriptInfo;
 
-  constructor(ckbNetwork: CkbNetwork) {
+  constructor(ckbNetwork: CkbNetwork, ckbPrivateKey?: string) {
     this.network = ckbNetwork;
-    this.client = this.initClient(ckbNetwork);
+    this.client = this.initClient();
+    this.signer = this.initSigner(ckbPrivateKey);
     this.rgbppScriptInfo = getRgbppScriptInfo(ckbNetwork);
   }
 
-  private initClient(ckbNetwork: CkbNetwork): ccc.ClientPublicMainnet | ccc.ClientPublicTestnet {
-    return ckbNetwork === 'mainnet' ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
+  private initClient(): ccc.ClientPublicMainnet | ccc.ClientPublicTestnet {
+    return this.network === 'mainnet' ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
+  }
+
+  private initSigner(ckbPrivateKey?: string) {
+    return ckbPrivateKey ? new ccc.SignerCkbPrivateKey(this.client, ckbPrivateKey) : undefined;
   }
 
   getClient() {
     return this.client;
+  }
+
+  getSigner() {
+    return this.signer;
   }
 
   genRgbppLockScript(btcTxId: string, btcOutIndex: number) {
@@ -30,5 +40,9 @@ export class CkbClient {
       hashType: this.rgbppScriptInfo.hashType,
       args: rgbppLockArgs,
     });
+  }
+
+  async addCellDepsOfKnownScripts(tx: ccc.Transaction, knownScript: ccc.KnownScript) {
+    await tx.addCellDepsOfKnownScripts(this.client, knownScript);
   }
 }

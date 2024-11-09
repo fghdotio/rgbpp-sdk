@@ -1,11 +1,11 @@
+import { RgbppClient } from 'rgbpp';
+
 import {
   RgbppTokenInfo,
   buildRgbppLockArgs,
   calculateRgbppCellCapacity,
   calculateRgbppTokenInfoCellCapacity,
   genRgbppLockScript,
-  getSecp256k1CellDep,
-  newCkbSignerCCC,
   ckbNetwork,
   append0x,
 } from 'rgbpp/ckb';
@@ -24,14 +24,21 @@ const prepareLaunchCell = async ({
   btcTxId: string;
   rgbppTokenInfo: RgbppTokenInfo;
 }) => {
-  // const issuerOwnerLock = (await addressToScriptCCC(ckbAddress));
   // The capacity required to launch cells is determined by the token info cell capacity, and transaction fee.
   const launchCellCapacity =
     calculateRgbppCellCapacity() + calculateRgbppTokenInfoCellCapacity(rgbppTokenInfo, isMainnet);
 
+  const rgbppClient = new RgbppClient({ ckbNetwork: ckbNetwork(ckbAddress), ckbPrivateKey: CKB_PRIVATE_KEY });
+  const ckbClient = rgbppClient.getCkbClient();
+
+  const rgbppLockScript = ckbClient.genRgbppLockScript(btcTxId, outIndex);
+  console.log('(ccc) rgbpp lock script', rgbppLockScript);
   // * rgbppLaunchLockScript's hash is the RGB++ Asset type script *args*
-  // ! TODO: TMP WORKAROUND, FIXME
+  console.log(`(ccc) rgbpp lock script hash (RGB++ Asset type script's args)`, rgbppLockScript.hash());
+
+  // * TODO REMOVE
   const rgbppLaunchLockScript = genRgbppLockScript(buildRgbppLockArgs(outIndex, btcTxId), isMainnet, BTC_TESTNET_TYPE);
+  console.log('rgbpp launch lock script', rgbppLaunchLockScript);
   const tx = ccc.Transaction.from({
     outputs: [
       {
@@ -42,14 +49,16 @@ const prepareLaunchCell = async ({
   });
   console.log('rgbpp owner lock script', tx.outputs[0].lock);
   console.log(`this is RGB++ Asset type script's args`, append0x(scriptToHash(rgbppLaunchLockScript)));
-  tx.addCellDeps(getSecp256k1CellDep(isMainnet) as ccc.CellDepLike);
-  const ckbSigner = newCkbSignerCCC(CKB_PRIVATE_KEY, ckbNetwork(ckbAddress));
+  // * TODO REMOVE
+
+  const ckbSigner = rgbppClient.getCkbSigner();
   // pass `filter` explicitly to ensure type script is empty (although it's the default behavior)
   await tx.completeInputsByCapacity(ckbSigner, 0, {
     scriptLenRange: [0, 1],
     outputDataLenRange: [0, 1],
   });
   await tx.completeFeeBy(ckbSigner);
+
   const txHash = await ckbSigner.sendTransaction(tx);
   await ckbSigner.client.waitTransaction(txHash, 0, 60000);
   console.info(`(ccc) Launch cell has been created and the CKB tx hash ${txHash}`);
@@ -60,8 +69,8 @@ const prepareLaunchCell = async ({
 // BTC Testnet3: https://mempool.space/testnet
 // BTC Signet: https://mempool.space/signet
 prepareLaunchCell({
-  outIndex: 2,
-  btcTxId: '27be61caf5424dbcd8756556fc0376bed55575042168149908ab68a0de28a932',
+  outIndex: 3,
+  btcTxId: '651cc2c7d28a249014eef29d43c9c4a61398dbb90275a1c9b3d96003f52bf4db',
   rgbppTokenInfo: RGBPP_TOKEN_INFO,
 })
   .then(() => {
