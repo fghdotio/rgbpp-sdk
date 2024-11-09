@@ -8,3 +8,4 @@ export * from './rgbpp';
 export * from './utils';
 export * from './constants';
 export * from './spore';
+export * from './client';

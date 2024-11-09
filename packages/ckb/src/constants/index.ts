@@ -1,4 +1,7 @@
 import { BTCTestnetType } from '../types';
+import { CkbNetwork } from '../utils/ccc';
+
+import { ccc } from '@ckb-ccc/core';
 
 export const CKB_UNIT = BigInt(10000_0000);
 export const MAX_FEE = BigInt(2000_0000);
@@ -10,6 +13,35 @@ export const RGBPP_TX_INPUTS_MAX_LENGTH = 40;
 
 export const RGBPP_WITNESS_PLACEHOLDER = '0xFF';
 export const RGBPP_TX_ID_PLACEHOLDER = '0000000000000000000000000000000000000000000000000000000000000000';
+
+export const getRgbppScriptInfo = (ckbNetwork: CkbNetwork): ccc.ScriptInfo => {
+  if (ckbNetwork === 'mainnet') {
+    return ccc.ScriptInfo.from({
+      codeHash: MainnetInfo.RgbppLockScript.codeHash,
+      hashType: MainnetInfo.RgbppLockScript.hashType,
+      cellDeps: [
+        ccc.CellDepInfo.from({
+          cellDep: {
+            outPoint: ccc.OutPoint.from(MainnetInfo.RgbppLockDep.outPoint!),
+            depType: MainnetInfo.RgbppLockDep.depType,
+          },
+        }),
+      ],
+    });
+  }
+  return ccc.ScriptInfo.from({
+    codeHash: TestnetInfo.RgbppLockScript.codeHash,
+    hashType: TestnetInfo.RgbppLockScript.hashType,
+    cellDeps: [
+      ccc.CellDepInfo.from({
+        cellDep: {
+          outPoint: ccc.OutPoint.from(TestnetInfo.RgbppLockDep.outPoint!),
+          depType: TestnetInfo.RgbppLockDep.depType,
+        },
+      }),
+    ],
+  });
+};
 
 const TestnetInfo = {
   Secp256k1LockDep: {

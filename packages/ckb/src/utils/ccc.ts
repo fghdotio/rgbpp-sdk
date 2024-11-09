@@ -2,7 +2,7 @@ import { ccc } from '@ckb-ccc/core';
 import { cccA as cccAdv } from '@ckb-ccc/core/advanced';
 
 /** Network type for CKB blockchain - either mainnet or testnet */
-type CKBNetwork = 'mainnet' | 'testnet';
+export type CkbNetwork = 'mainnet' | 'testnet';
 
 const cccClients = {
   mainnet: new ccc.ClientPublicMainnet(),
@@ -32,7 +32,7 @@ export const updateTestnetClientCCC = (config: {
 };
 
 // * suggestion: Constant-ize address prefixes
-const selectClientCCC = (network: CKBNetwork) => {
+const selectClientCCC = (network: CkbNetwork) => {
   switch (network) {
     case 'mainnet':
       return cccClients.mainnet;
@@ -42,7 +42,7 @@ const selectClientCCC = (network: CKBNetwork) => {
       throw new Error('Invalid address');
   }
 };
-export const ckbNetwork = (address: string): CKBNetwork => {
+export const ckbNetwork = (address: string): CkbNetwork => {
   if (address.startsWith('ckb')) {
     return 'mainnet';
   } else if (address.startsWith('ckt')) {
@@ -56,11 +56,11 @@ export const addressToScriptCCC = async (address: string): Promise<ccc.Script> =
   return (await ccc.Address.fromString(address, selectClientCCC(ckbNetwork(address)))).script;
 };
 
-export const privateKeyToAddressCCC = async (privateKey: string, network: CKBNetwork) => {
+export const privateKeyToAddressCCC = async (privateKey: string, network: CkbNetwork) => {
   const priv = new ccc.SignerCkbPrivateKey(selectClientCCC(network), privateKey);
   return await priv.getRecommendedAddress();
 };
 
-export const newCkbSignerCCC = (privateKey: string, network: CKBNetwork) => {
+export const newCkbSignerCCC = (privateKey: string, network: CkbNetwork) => {
   return new ccc.SignerCkbPrivateKey(selectClientCCC(network), privateKey);
 };
