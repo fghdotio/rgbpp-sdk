@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { serializeScript } from '@nervosnetwork/ckb-sdk-utils';
 import { BtcAssetsApiError, genBtcBatchTransferCkbVirtualTx, sendRgbppUtxos } from 'rgbpp';
 import { RGBPP_TOKEN_INFO } from './0-rgbpp-token-info';
@@ -12,7 +13,6 @@ import {
   BTC_TESTNET_TYPE,
 } from '../../env';
 import {
-  RgbppBtcAddressReceiver,
   appendCkbTxWitnesses,
   appendIssuerCellToBtcBatchTransfer,
   buildRgbppLockArgs,
@@ -23,14 +23,45 @@ import {
 import { saveCkbVirtualTxResult } from '../../shared/utils';
 import { signAndSendPsbt } from '../../shared/btc-account';
 
-interface Params {
-  rgbppLockArgsList: string[];
-  receivers: RgbppBtcAddressReceiver[];
-  xudtTypeArgs: string;
-}
-
 // Warning: Before runing this file for the first time, please run 2-launch-rgbpp.ts
-const distributeRgbppAssetOnBtc = async ({ rgbppLockArgsList, receivers, xudtTypeArgs }: Params) => {
+const distributeRgbppAssetOnBtc = async ({
+  susBtcTxId,
+  susBtcOutIndexStr,
+  xudtTypeArgs,
+  receivers,
+}: {
+  susBtcTxId: string;
+  susBtcOutIndexStr: string;
+  xudtTypeArgs: string;
+  receivers: string;
+}) => {
+  const susBtcOutIndex = parseInt(susBtcOutIndexStr);
+  if (isNaN(susBtcOutIndex)) {
+    throw new Error('RGBPP_XUDT_TRANSFER_SUS_BTC_OUT_INDEX is not a number');
+  }
+  const rgbppXudtReceivers = receivers.split(';').map((receiver) => {
+    const [btcAddress, amountStr] = receiver.split(':');
+    if (!btcAddress || !amountStr) {
+      throw new Error('Invalid receiver format');
+    }
+    let amount: bigint;
+    try {
+      amount = BigInt(amountStr);
+    } catch (error) {
+      throw new Error('RGBPP_XUDT_LAUNCH_AMOUNT is not a number');
+    }
+    return { toBtcAddress: btcAddress, transferAmount: BigInt(amount) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal) };
+  });
+  let btcFeeRate: number | undefined;
+  if (process.env.RGBPP_BTC_FEE_RATE !== undefined) {
+    btcFeeRate = parseInt(process.env.RGBPP_BTC_FEE_RATE);
+    if (isNaN(btcFeeRate)) {
+      throw new Error('RGBPP_BTC_FEE_RATE is not a number');
+    }
+  }
+
+  const rgbppLockArgsList = [buildRgbppLockArgs(susBtcOutIndex, susBtcTxId)];
+
   // Warning: Please replace with your real xUDT type script here
   const xudtType: CKBComponents.Script = {
     ...getXudtTypeScript(isMainnet),
@@ -42,7 +73,7 @@ const distributeRgbppAssetOnBtc = async ({ rgbppLockArgsList, receivers, xudtTyp
     collector,
     rgbppLockArgsList,
     xudtTypeBytes: serializeScript(xudtType),
-    rgbppReceivers: receivers,
+    rgbppReceivers: rgbppXudtReceivers,
     isMainnet,
     btcTestnetType: BTC_TESTNET_TYPE,
   });
@@ -60,12 +91,13 @@ const distributeRgbppAssetOnBtc = async ({ rgbppLockArgsList, receivers, xudtTyp
   const psbt = await sendRgbppUtxos({
     ckbVirtualTx: ckbRawTx,
     commitment,
-    tos: receivers.map((receiver) => receiver.toBtcAddress),
+    tos: rgbppXudtReceivers.map((receiver) => receiver.toBtcAddress),
     needPaymaster: needPaymasterCell,
     ckbCollector: collector,
     from: btcAccount.from,
     fromPubkey: btcAccount.fromPubkey,
     source: btcDataSource,
+    feeRate: btcFeeRate,
   });
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(psbt, btcAccount, btcService);
@@ -106,17 +138,21 @@ const distributeRgbppAssetOnBtc = async ({ rgbppLockArgsList, receivers, xudtTyp
 // Please use your real BTC UTXO information on the BTC Testnet
 // BTC Testnet3: https://mempool.space/testnet
 // BTC Signet: https://mempool.space/signet
-
-// rgbppLockArgs: outIndexU32 + btcTxId
 distributeRgbppAssetOnBtc({
   // Warning: If rgbpp assets are distributed continuously, then the position of the current rgbpp asset utxo depends on the position of the previous change utxo distributed
-  rgbppLockArgsList: [buildRgbppLockArgs(1, '5ab72e296c7e4f93302f5b1827c59860a95b94958942c65977bf25fcd7364bf3')],
-  // The xudtTypeArgs comes from the logs "RGB++ Asset type script args" of 2-launch-rgbpp.ts
-  xudtTypeArgs: '0x157339c6b1ad2156bc9aa3f901abb07253f198160fb484226127ccafedd690c8',
-  receivers: [
-    {
-      toBtcAddress: 'tb1qhp9fh9qsfeyh0yhewgu27ndqhs5qlrqwau28m7',
-      transferAmount: BigInt(1000) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal),
-    },
-  ],
+  susBtcTxId: process.env.RGBPP_XUDT_TRANSFER_SUS_BTC_TX_ID!,
+  susBtcOutIndexStr: process.env.RGBPP_XUDT_TRANSFER_SUS_BTC_OUT_INDEX!,
+  xudtTypeArgs: process.env.RGBPP_XUDT_TYPE_ARGS!,
+  receivers: process.env.RGBPP_XUDT_TRANSFER_RECEIVERS!,
 });
+
+/* 
+Usage:
+RGBPP_XUDT_TRANSFER_SUS_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_TRANSFER_SUS_BTC_OUT_INDEX=<btc_out_index> RGBPP_XUDT_TYPE_ARGS=<xudt_type_args> RGBPP_XUDT_TRANSFER_RECEIVERS=<btc_address_1:amount_1;btc_address_2:amount_2;...> [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/3-distribute-rgbpp.ts
+
+Example:
+RGBPP_XUDT_TRANSFER_SUS_BTC_TX_ID=abc123... RGBPP_XUDT_TRANSFER_SUS_BTC_OUT_INDEX=0 RGBPP_XUDT_TYPE_ARGS=0x12fa123b8a4516ec31ea2871da29a66f4d6d8fbb9e1693f15ad416c1e89eb237 RGBPP_XUDT_TRANSFER_RECEIVERS=tb1qeq...nm85:1000;tb1qeq...nm86:2000 npx tsx xudt/launch/3-distribute-rgbpp.ts 
+
+Note:
+- RGBPP_BTC_FEE_RATE is optional, uses default network fee rate if not specified
+*/

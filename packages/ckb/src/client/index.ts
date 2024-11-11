@@ -45,4 +45,8 @@ export class CkbClient {
   async addCellDepsOfKnownScripts(tx: ccc.Transaction, knownScript: ccc.KnownScript) {
     await tx.addCellDepsOfKnownScripts(this.client, knownScript);
   }
+
+  static newTransaction(tx: ccc.TransactionLike = {}) {
+    return ccc.Transaction.from(tx);
+  }
 }

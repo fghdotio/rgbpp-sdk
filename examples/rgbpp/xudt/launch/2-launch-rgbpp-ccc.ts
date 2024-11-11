@@ -1,12 +1,11 @@
 /* eslint-disable */
-import { sendRgbppUtxos, BtcAssetsApiError } from 'rgbpp';
+import { BtcAssetsApiError } from 'rgbpp';
 
 import {
   buildRgbppLockArgs,
   RgbppTokenInfo,
   appendCkbTxWitnessesCCC,
   updateCkbTxWithRealBtcTxIdCCC,
-  sendCkbTx,
   genPartialRgbppCkbTx,
   newCkbSignerCCC,
   ckbNetwork,
@@ -19,7 +18,6 @@ import {
   btcAccount,
   btcDataSource,
   btcService,
-  collector,
   isMainnet,
   CKB_PRIVATE_KEY,
   ckbAddress,
@@ -27,19 +25,45 @@ import {
 import { saveCkbVirtualTxResult } from '../../shared/utils';
 import { signAndSendPsbt } from '../../shared/btc-account';
 
-interface Params {
-  ownerRgbppLockArgs: string;
-  launchAmount: bigint;
-  rgbppTokenInfo: RgbppTokenInfo;
-}
-
 // Warning: Before runing this file, please run 2-prepare-launch.ts
-const launchRgppAsset = async ({ ownerRgbppLockArgs, launchAmount, rgbppTokenInfo }: Params) => {
+const launchRgppAsset = async ({
+  susBtcTxId,
+  susBtcOutIndexStr,
+  launchAmountStr,
+}: {
+  susBtcTxId: string;
+  susBtcOutIndexStr: string;
+  launchAmountStr: string | undefined;
+}) => {
+  const susBtcOutIndex = parseInt(susBtcOutIndexStr);
+  if (isNaN(susBtcOutIndex)) {
+    throw new Error('RGBPP_XUDT_LAUNCH_SUS_BTC_OUT_INDEX is not a number');
+  }
+  let launchAmount: bigint;
+  if (launchAmountStr !== undefined) {
+    try {
+      launchAmount = BigInt(launchAmountStr) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
+    } catch (error) {
+      throw new Error('RGBPP_XUDT_LAUNCH_AMOUNT is not a number');
+    }
+  } else {
+    launchAmount = BigInt(2100_0000) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
+  }
+  let btcFeeRate: number | undefined;
+  if (process.env.RGBPP_BTC_FEE_RATE !== undefined) {
+    btcFeeRate = parseInt(process.env.RGBPP_BTC_FEE_RATE);
+    if (isNaN(btcFeeRate)) {
+      throw new Error('RGBPP_BTC_FEE_RATE is not a number');
+    }
+  }
+
+  const ownerRgbppLockArgs = buildRgbppLockArgs(susBtcOutIndex, susBtcTxId);
+
   const ckbSigner = newCkbSignerCCC(CKB_PRIVATE_KEY, ckbNetwork(ckbAddress));
   const { commitment, partialCkbTx, needPaymasterCell } = await genPartialRgbppCkbTx({
     signer: ckbSigner,
     ownerRgbppLockArgs,
-    rgbppTokenInfo,
+    rgbppTokenInfo: RGBPP_TOKEN_INFO,
     launchAmount,
     isMainnet,
     btcTestnetType: BTC_TESTNET_TYPE,
@@ -56,7 +80,7 @@ const launchRgppAsset = async ({ ownerRgbppLockArgs, launchAmount, rgbppTokenInf
     from: btcAccount.from,
     fromPubkey: btcAccount.fromPubkey,
     source: btcDataSource,
-    feeRate: 525,
+    feeRate: btcFeeRate,
   });
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(rgbppPsbt, btcAccount, btcService);
@@ -80,6 +104,10 @@ const launchRgppAsset = async ({ ownerRgbppLockArgs, launchAmount, rgbppTokenInf
       await ckbSigner.client.waitTransaction(txHash, 0, 60000);
 
       console.info(`RGB++ Asset has been launched and CKB tx hash is ${txHash}`);
+      console.log(`Execute the following command to distribute the RGB++ asset:\n`);
+      console.log(
+        `RGBPP_XUDT_TRANSFER_SUS_BTC_TX_ID=${btcTxId} RGBPP_XUDT_TRANSFER_SUS_BTC_OUT_INDEX=1 RGBPP_XUDT_TYPE_ARGS=${partialCkbTx.outputs[0].type?.args} RGBPP_XUDT_TRANSFER_RECEIVERS=<btc_address_1:amount_1;btc_address_2:amount_2;...> npx tsx xudt/launch/3-distribute-rgbpp.ts`,
+      );
     } catch (error) {
       if (!(error instanceof BtcAssetsApiError)) {
         console.error(error);
@@ -91,43 +119,22 @@ const launchRgppAsset = async ({ ownerRgbppLockArgs, launchAmount, rgbppTokenInf
 // Please use your real BTC UTXO information on the BTC Testnet which should be same as the 1-prepare-launch.ts
 // BTC Testnet3: https://mempool.space/testnet
 // BTC Signet: https://mempool.space/signet
-
-// rgbppLockArgs: outIndexU32 + btcTxId
 launchRgppAsset({
-  ownerRgbppLockArgs: buildRgbppLockArgs(2, '27be61caf5424dbcd8756556fc0376bed55575042168149908ab68a0de28a932'),
-  rgbppTokenInfo: RGBPP_TOKEN_INFO,
+  susBtcTxId: process.env.RGBPP_XUDT_LAUNCH_SUS_BTC_TX_ID!,
+  susBtcOutIndexStr: process.env.RGBPP_XUDT_LAUNCH_SUS_BTC_OUT_INDEX!,
   // The total issuance amount of RGBPP Token, the decimal is determined by RGBPP Token info
-  launchAmount: BigInt(2100_0000) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal),
+  launchAmountStr: process.env.RGBPP_XUDT_LAUNCH_AMOUNT,
 });
 
 /* 
-npx tsx xudt/launch/2-launch-rgbpp-ccc.ts
-*/
+Usage:
+RGBPP_XUDT_LAUNCH_SUS_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_LAUNCH_SUS_BTC_OUT_INDEX=<btc_out_index> [RGBPP_XUDT_LAUNCH_AMOUNT=<launch_amount>] [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/2-launch-rgbpp-ccc.ts
 
-/*
-rgbppAssetOwnerLock {
-  codeHash: '0x61ca7a4796a4eb19ca4f0d065cb9b10ddcf002f10f7cbb810c706cb6bb5c3248',
-  hashType: 'type',
-  args: '0x0200000032a928dea068ab0899146821047555d5be7603fc566575d8bc4d42f5ca61be27'
-}
+Example:
+RGBPP_XUDT_LAUNCH_SUS_BTC_TX_ID=abc123... RGBPP_XUDT_LAUNCH_SUS_BTC_OUT_INDEX=0 npx tsx xudt/launch/2-launch-rgbpp-ccc.ts
 
-1 cells found
- [
-  Cell {
-    outPoint: OutPoint {
-      txHash: '0x0518822b8300098df87cbbc596ab29738c4a450c7dd3f6cd610a6220f193db5f',
-      index: 0n
-    },
-    cellOutput: CellOutput {
-      capacity: 47400000000n,
-      lock: [Script],
-      type: undefined
-    },
-    outputData: '0x'
-  }
-]
-gatheredCapacity: 47400000000, input count: 1
-RGB++ Asset type script args:  0xdf31616c6d8e386d882ecd360c74c3d19d3ae83b9e6a8958cd5f909b77b08532
-BTC Testnet3 TxId: 5b2fe20cc0ed651f94eef306def3695f78d28bc17c8112a3cf69736c9c765e55
-RGB++ Asset has been launched and CKB tx hash is 0x3f26c3ef58163452873b730d48817f1b90f8d515c9562c1f4274a6ca7a9f22eb
+Note:
+- RGBPP_XUDT_LAUNCH_AMOUNT is optional, defaults to 2100_0000. The value should be the raw amount without decimals 
+  (e.g., use 2100_0000 for 21M tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
+- RGBPP_BTC_FEE_RATE is optional, uses default network fee rate if not specified
 */
