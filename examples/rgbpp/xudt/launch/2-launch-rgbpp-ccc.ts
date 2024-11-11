@@ -1,14 +1,13 @@
 /* eslint-disable */
+import { RgbppClient } from 'rgbpp';
+
 import { BtcAssetsApiError } from 'rgbpp';
 
 import {
-  buildRgbppLockArgs,
-  RgbppTokenInfo,
   appendCkbTxWitnessesCCC,
   updateCkbTxWithRealBtcTxIdCCC,
-  genPartialRgbppCkbTx,
-  newCkbSignerCCC,
   ckbNetwork,
+  MAGIC_NUMBER_LAUNCH_RGBPP_BTC_OUT_INDEX,
 } from 'rgbpp/ckb';
 
 import { buildRgbppUtxos } from 'rgbpp/btc';
@@ -22,10 +21,9 @@ import {
   CKB_PRIVATE_KEY,
   ckbAddress,
 } from '../../env';
-import { saveCkbVirtualTxResult } from '../../shared/utils';
 import { signAndSendPsbt } from '../../shared/btc-account';
 
-// Warning: Before runing this file, please run 2-prepare-launch.ts
+// Warning: Before running this file, please run 2-prepare-launch.ts
 const launchRgppAsset = async ({
   susBtcTxId,
   susBtcOutIndexStr,
@@ -57,17 +55,20 @@ const launchRgppAsset = async ({
     }
   }
 
-  const ownerRgbppLockArgs = buildRgbppLockArgs(susBtcOutIndex, susBtcTxId);
-
-  const ckbSigner = newCkbSignerCCC(CKB_PRIVATE_KEY, ckbNetwork(ckbAddress));
-  const { commitment, partialCkbTx, needPaymasterCell } = await genPartialRgbppCkbTx({
-    signer: ckbSigner,
-    ownerRgbppLockArgs,
-    rgbppTokenInfo: RGBPP_TOKEN_INFO,
-    launchAmount,
-    isMainnet,
-    btcTestnetType: BTC_TESTNET_TYPE,
+  const rgbppClient = new RgbppClient({
+    ckbNetwork: ckbNetwork(ckbAddress),
+    ckbPrivateKey: CKB_PRIVATE_KEY!,
+    btcNetwork: BTC_TESTNET_TYPE,
   });
+  const ckbClient = rgbppClient.getCkbClient();
+  const ckbSigner = ckbClient.getSigner()!;
+
+  const { commitment, partialCkbTx } = await rgbppClient.generateXudtLaunchPartialCkbTx(
+    RGBPP_TOKEN_INFO,
+    launchAmount,
+    susBtcTxId,
+    susBtcOutIndex,
+  );
 
   console.log('RGB++ Asset type script args: ', partialCkbTx.outputs[0].type?.args);
 
@@ -75,7 +76,7 @@ const launchRgppAsset = async ({
     partialCkbTx,
     commitment,
     tos: [btcAccount.from],
-    needPaymaster: needPaymasterCell,
+    needPaymaster: false,
     ckbSigner,
     from: btcAccount.from,
     fromPubkey: btcAccount.fromPubkey,
@@ -106,7 +107,7 @@ const launchRgppAsset = async ({
       console.info(`RGB++ Asset has been launched and CKB tx hash is ${txHash}`);
       console.log(`Execute the following command to distribute the RGB++ asset:\n`);
       console.log(
-        `RGBPP_XUDT_TRANSFER_SUS_BTC_TX_ID=${btcTxId} RGBPP_XUDT_TRANSFER_SUS_BTC_OUT_INDEX=1 RGBPP_XUDT_TYPE_ARGS=${partialCkbTx.outputs[0].type?.args} RGBPP_XUDT_TRANSFER_RECEIVERS=<btc_address_1:amount_1;btc_address_2:amount_2;...> npx tsx xudt/launch/3-distribute-rgbpp.ts`,
+        `RGBPP_XUDT_TRANSFER_SUS_BTC_TX_ID=${btcTxId} RGBPP_XUDT_TRANSFER_SUS_BTC_OUT_INDEX=${MAGIC_NUMBER_LAUNCH_RGBPP_BTC_OUT_INDEX} RGBPP_XUDT_TYPE_ARGS=${partialCkbTx.outputs[0].type?.args} RGBPP_XUDT_TRANSFER_RECEIVERS="<btc_address_1:amount_1;btc_address_2:amount_2;...>" ${btcFeeRate ? `RGBPP_BTC_FEE_RATE=${btcFeeRate}` : ''} npx tsx xudt/launch/3-distribute-rgbpp.ts`,
       );
     } catch (error) {
       if (!(error instanceof BtcAssetsApiError)) {

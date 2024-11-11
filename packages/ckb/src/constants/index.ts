@@ -1,5 +1,4 @@
 import { BTCTestnetType } from '../types';
-import { CkbNetwork } from '../utils/ccc';
 
 import { ccc } from '@ckb-ccc/core';
 
@@ -14,29 +13,27 @@ export const RGBPP_TX_INPUTS_MAX_LENGTH = 40;
 export const RGBPP_WITNESS_PLACEHOLDER = '0xFF';
 export const RGBPP_TX_ID_PLACEHOLDER = '0000000000000000000000000000000000000000000000000000000000000000';
 
-export const getRgbppScriptInfo = (ckbNetwork: CkbNetwork): ccc.ScriptInfo => {
-  if (ckbNetwork === 'mainnet') {
-    return ccc.ScriptInfo.from({
-      codeHash: MainnetInfo.RgbppLockScript.codeHash,
-      hashType: MainnetInfo.RgbppLockScript.hashType,
-      cellDeps: [
-        ccc.CellDepInfo.from({
-          cellDep: {
-            outPoint: ccc.OutPoint.from(MainnetInfo.RgbppLockDep.outPoint!),
-            depType: MainnetInfo.RgbppLockDep.depType,
-          },
-        }),
-      ],
-    });
-  }
+export type CkbNetwork = 'mainnet' | 'testnet';
+
+// 0th is OP_RETURN
+export const MAGIC_NUMBER_LAUNCH_RGBPP_BTC_OUT_INDEX = 1;
+
+export type ScriptName = 'RgbppLock' | 'XUDTType';
+
+export const getScriptInfo = (ckbNetwork: CkbNetwork, scriptName: ScriptName): ccc.ScriptInfo => {
+  const scriptCollection = ckbNetwork === 'mainnet' ? MainnetInfo : TestnetInfo;
+  // * TODO TMP
+  const scriptInfo = scriptCollection[`${scriptName}Script`];
+  const cellDep = scriptCollection[`${scriptName}Dep`];
+
   return ccc.ScriptInfo.from({
-    codeHash: TestnetInfo.RgbppLockScript.codeHash,
-    hashType: TestnetInfo.RgbppLockScript.hashType,
+    codeHash: scriptInfo.codeHash,
+    hashType: scriptInfo.hashType,
     cellDeps: [
       ccc.CellDepInfo.from({
         cellDep: {
-          outPoint: ccc.OutPoint.from(TestnetInfo.RgbppLockDep.outPoint!),
-          depType: TestnetInfo.RgbppLockDep.depType,
+          outPoint: ccc.OutPoint.from(cellDep.outPoint!),
+          depType: cellDep.depType,
         },
       }),
     ],

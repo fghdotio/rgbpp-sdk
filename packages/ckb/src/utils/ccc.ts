@@ -2,7 +2,7 @@ import { ccc } from '@ckb-ccc/core';
 import { cccA as cccAdv } from '@ckb-ccc/core/advanced';
 
 /** Network type for CKB blockchain - either mainnet or testnet */
-export type CkbNetwork = 'mainnet' | 'testnet';
+type CkbNetwork = 'mainnet' | 'testnet';
 
 const cccClients = {
   mainnet: new ccc.ClientPublicMainnet(),

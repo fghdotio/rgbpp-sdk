@@ -29,13 +29,17 @@ const prepareLaunchCell = async ({
   const launchCellCapacity =
     calculateRgbppCellCapacity() + calculateRgbppTokenInfoCellCapacity(RGBPP_TOKEN_INFO, isMainnet);
 
-  const rgbppClient = new RgbppClient({ ckbNetwork: ckbNetwork(ckbAddress), ckbPrivateKey: CKB_PRIVATE_KEY });
+  const rgbppClient = new RgbppClient({
+    ckbNetwork: ckbNetwork(ckbAddress),
+    ckbPrivateKey: CKB_PRIVATE_KEY,
+    btcNetwork: BTC_TESTNET_TYPE,
+  });
   const ckbClient = rgbppClient.getCkbClient();
 
-  const rgbppLockScript = ckbClient.genRgbppLockScript(susBtcTxId, susBtcOutIndex);
-  console.log('(ccc) rgbpp lock script', rgbppLockScript);
+  const rgbppLockScript = ckbClient.generateRgbppLockScript(susBtcOutIndex, susBtcTxId);
+  console.log('(ccc) RGB++ lock script', rgbppLockScript);
   // * rgbppLaunchLockScript's hash is the RGB++ Asset type script *args*
-  console.log(`(ccc) rgbpp lock script hash (RGB++ Asset type script's args)`, rgbppLockScript.hash());
+  console.log(`(ccc) RGB++ lock script hash (RGB++ Asset type script's args)`, rgbppLockScript.hash());
 
   // * TODO REMOVE
   const rgbppLaunchLockScript = genRgbppLockScript(
@@ -43,7 +47,7 @@ const prepareLaunchCell = async ({
     isMainnet,
     BTC_TESTNET_TYPE,
   );
-  console.log('rgbpp launch lock script', rgbppLaunchLockScript);
+  console.log('(ccc) RGB++ launch lock script', rgbppLaunchLockScript);
   const tx = RgbppClient.newCkbTransaction({
     outputs: [
       {
@@ -52,8 +56,8 @@ const prepareLaunchCell = async ({
       },
     ],
   });
-  console.log('rgbpp owner lock script', tx.outputs[0].lock);
-  console.log(`this is RGB++ Asset type script's args: 0x${scriptToHash(rgbppLaunchLockScript)}`);
+  console.log('RGB++ owner lock script', tx.outputs[0].lock);
+  console.log(`This is RGB++ Asset type script's args: 0x${scriptToHash(rgbppLaunchLockScript)}`);
   // * TODO REMOVE
 
   const ckbSigner = rgbppClient.getCkbSigner()!;
@@ -66,9 +70,9 @@ const prepareLaunchCell = async ({
 
   const txHash = await ckbSigner.sendTransaction(tx);
   await ckbSigner.client.waitTransaction(txHash, 0, 60000);
-  console.info(`(ccc) Launch cell has been created and the CKB tx hash ${txHash}`);
+  console.info(`(ccc) Launch cell has been created and the CKB tx hash is ${txHash}`);
 
-  console.log(`Execute the following command to launch the RGB++ asset:\n`);
+  console.log(`Execute the following command to launch the RGB++ xUDT asset:\n`);
   console.log(
     `RGBPP_XUDT_LAUNCH_SUS_BTC_TX_ID=${susBtcTxId} RGBPP_XUDT_LAUNCH_SUS_BTC_OUT_INDEX=${susBtcOutIndex} npx tsx xudt/launch/2-launch-rgbpp-ccc.ts`,
   );
