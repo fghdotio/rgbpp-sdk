@@ -78,7 +78,7 @@ const launchRgppAsset = async ({
   const ckbClient = rgbppClient.getCkbClient();
   const ckbSigner = ckbClient.getSigner()!;
 
-  const { commitment, partialCkbTx } = await rgbppClient.generateXudtLaunchPartialCkbTx(
+  const { commitment, partialCkbTx } = await rgbppClient.buildXudtIssuanceTx(
     RGBPP_TOKEN_INFO,
     launchAmount,
     susBtcTxId,

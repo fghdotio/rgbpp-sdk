@@ -7,19 +7,33 @@ export class CkbClient {
   private network: CkbNetwork;
   private rpcClient: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet;
   private signer: ccc.Signer;
+  private xudtPartialTxBuilder: XudtPartialCkbTxBuilder;
+  private sporePartialTxBuilder: SporePartialCkbTxBuilder;
 
   constructor(ckbNetwork: CkbNetwork, ckbPrivateKey: string) {
     this.network = ckbNetwork;
     this.rpcClient = this.initRpcClient();
     this.signer = this.setSigner(ckbPrivateKey);
+    this.xudtPartialTxBuilder = new XudtPartialCkbTxBuilder(this.rpcClient);
+    this.sporePartialTxBuilder = new SporePartialCkbTxBuilder(this.rpcClient);
   }
 
   static newTransaction(tx: ccc.TransactionLike = {}) {
     return ccc.Transaction.from(tx);
   }
 
+  static calculateCommitment() {}
+
   getNetwork() {
     return this.network;
+  }
+
+  getXudtPartialTxBuilder() {
+    return this.xudtPartialTxBuilder;
+  }
+
+  getSporePartialTxBuilder() {
+    return this.sporePartialTxBuilder;
   }
 
   isOnMainnet() {
@@ -85,3 +99,47 @@ export type CkbWaitTransactionConfig = {
   timeout?: number;
   interval?: number;
 };
+
+export class XudtPartialCkbTxBuilder {
+  private client: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet;
+
+  constructor(rpcClient: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet) {
+    this.client = rpcClient;
+  }
+
+  async issuanceTx() {
+    console.log(this.client);
+  }
+
+  async transferTx() {}
+
+  async batchTransferTx() {}
+
+  async leapFromBtcToCkbTx() {}
+
+  async leapFromCkbToBtcTx() {}
+
+  async btcTimeCellsSpentTx() {}
+}
+
+export class SporePartialCkbTxBuilder {
+  private client: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet;
+
+  constructor(rpcClient: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet) {
+    this.client = rpcClient;
+  }
+
+  async createClusterTx() {
+    console.log(this.client);
+  }
+
+  async creationTx() {}
+
+  async transferTx() {}
+
+  async leapFromBtcToCkbTx() {}
+
+  async leapFromCkbToBtcTx() {}
+
+  async btcTimeCellsSpentTx() {}
+}

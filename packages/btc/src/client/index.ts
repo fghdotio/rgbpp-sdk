@@ -33,6 +33,8 @@ export class BtcClient {
     return this.assetsApi;
   }
 
+  async generatePbst() {}
+
   async getRgbppSpvProof(btcTxId: string, confirmations: number) {
     return await this.assetsApi.getRgbppSpvProof(btcTxId, confirmations);
   }

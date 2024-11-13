@@ -33,6 +33,10 @@ export class RgbppClient {
     return CkbClient.newTransaction(tx);
   }
 
+  static calculateCommitment() {
+    return CkbClient.calculateCommitment();
+  }
+
   getCkbClient() {
     return this.ckbClient;
   }
@@ -57,7 +61,11 @@ export class RgbppClient {
     return this.btcClient.sendTransaction(psbt);
   }
 
-  async generateXudtLaunchPartialCkbTx(
+  async generateBtcPsbt() {
+    return this.btcClient.generatePbst();
+  }
+
+  async buildXudtIssuanceTx(
     tokenInfo: RgbppTokenInfo,
     launchAmount: bigint,
     susBtcTxId: string,
