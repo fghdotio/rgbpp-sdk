@@ -21,3 +21,5 @@ export * from './api/sendUtxos';
 export * from './api/sendRgbppUtxos';
 
 export * from './client';
+
+export * from './account';

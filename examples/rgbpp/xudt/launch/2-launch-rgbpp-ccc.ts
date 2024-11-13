@@ -20,6 +20,11 @@ import {
   isMainnet,
   CKB_PRIVATE_KEY,
   ckbAddress,
+  BTC_SERVICE_URL,
+  BTC_SERVICE_TOKEN,
+  BTC_SERVICE_ORIGIN,
+  BTC_PRIVATE_KEY,
+  BTC_ADDRESS_TYPE,
 } from '../../env';
 import { signAndSendPsbt } from '../../shared/btc-account';
 
@@ -59,6 +64,16 @@ const launchRgppAsset = async ({
     ckbNetwork: ckbNetwork(ckbAddress),
     ckbPrivateKey: CKB_PRIVATE_KEY!,
     btcNetwork: BTC_TESTNET_TYPE,
+    btcAssetsApiConfig: {
+      url: BTC_SERVICE_URL,
+      token: BTC_SERVICE_TOKEN,
+      origin: BTC_SERVICE_ORIGIN,
+    },
+    btcAccountConfig: {
+      privateKey: BTC_PRIVATE_KEY,
+      addressType: BTC_ADDRESS_TYPE,
+      networkType: BTC_TESTNET_TYPE,
+    },
   });
   const ckbClient = rgbppClient.getCkbClient();
   const ckbSigner = ckbClient.getSigner()!;
@@ -84,13 +99,13 @@ const launchRgppAsset = async ({
     feeRate: btcFeeRate,
   });
 
-  const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(rgbppPsbt, btcAccount, btcService);
+  const { txId: btcTxId, rawTxHex: btcTxBytes } = await rgbppClient.sendBtcTransaction(rgbppPsbt);
   console.log(`BTC ${BTC_TESTNET_TYPE} TxId: ${btcTxId}`);
 
   const interval = setInterval(async () => {
     try {
       console.log('Waiting for BTC tx and proof to be ready');
-      const rgbppApiSpvProof = await btcService.getRgbppSpvProof(btcTxId, 0);
+      const rgbppApiSpvProof = await rgbppClient.getRgbppSpvProof(btcTxId, 0);
       clearInterval(interval);
       // Update CKB transaction with the real BTC txId
       const updateCkbTx = updateCkbTxWithRealBtcTxIdCCC({ ckbPartialTx: partialCkbTx, btcTxId, isMainnet });
@@ -101,8 +116,11 @@ const launchRgppAsset = async ({
       });
 
       await ckbTx.completeFeeBy(ckbSigner);
-      const txHash = await ckbSigner.sendTransaction(ckbTx);
-      await ckbSigner.client.waitTransaction(txHash, 0, 60000);
+
+      const { txHash } = await rgbppClient.sendCkbTransaction(ckbTx, {
+        confirmations: 0,
+        timeout: 60000,
+      });
 
       console.info(`RGB++ Asset has been launched and CKB tx hash is ${txHash}`);
       console.log(`Execute the following command to distribute the RGB++ asset:\n`);

@@ -6,12 +6,12 @@ import { getScriptInfo, ScriptName, CkbNetwork } from '../constants';
 export class CkbClient {
   private network: CkbNetwork;
   private rpcClient: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet;
-  private signer: ccc.Signer | undefined;
+  private signer: ccc.Signer;
 
-  constructor(ckbNetwork: CkbNetwork, ckbPrivateKey?: string) {
+  constructor(ckbNetwork: CkbNetwork, ckbPrivateKey: string) {
     this.network = ckbNetwork;
     this.rpcClient = this.initRpcClient();
-    this.signer = this.initSigner(ckbPrivateKey);
+    this.signer = this.setSigner(ckbPrivateKey);
   }
 
   static newTransaction(tx: ccc.TransactionLike = {}) {
@@ -30,8 +30,8 @@ export class CkbClient {
     return this.network === 'mainnet' ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
   }
 
-  private initSigner(ckbPrivateKey?: string) {
-    return ckbPrivateKey ? new ccc.SignerCkbPrivateKey(this.rpcClient, ckbPrivateKey) : undefined;
+  private setSigner(ckbPrivateKey: string) {
+    return new ccc.SignerCkbPrivateKey(this.rpcClient, ckbPrivateKey);
   }
 
   getRpcClient() {
@@ -61,7 +61,27 @@ export class CkbClient {
     });
   }
 
+  async sendTransaction(tx: ccc.TransactionLike, config?: CkbWaitTransactionConfig) {
+    const txHash = await this.signer.sendTransaction(tx);
+    let res;
+    if (config) {
+      res = await this.rpcClient.waitTransaction(txHash, config.confirmations, config.timeout, config.interval);
+    } else {
+      res = await this.rpcClient.waitTransaction(txHash);
+    }
+    return {
+      txHash,
+      res,
+    };
+  }
+
   async addCellDepsOfKnownScripts(tx: ccc.Transaction, knownScript: ccc.KnownScript) {
     await tx.addCellDepsOfKnownScripts(this.rpcClient, knownScript);
   }
 }
+
+export type CkbWaitTransactionConfig = {
+  confirmations?: number;
+  timeout?: number;
+  interval?: number;
+};

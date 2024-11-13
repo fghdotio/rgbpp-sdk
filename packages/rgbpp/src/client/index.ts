@@ -14,8 +14,9 @@ import {
   fetchTypeIdCellDeps,
   RGBPP_WITNESS_PLACEHOLDER,
   calculateCommitment,
+  CkbWaitTransactionConfig,
 } from '@rgbpp-sdk/ckb';
-import { BtcClient, BtcNetwork } from '@rgbpp-sdk/btc';
+import { BtcClient, BtcNetwork, BtcAssetsApiConfig, BtcAccountConfig, bitcoin } from '@rgbpp-sdk/btc';
 
 import { ccc } from '@ckb-ccc/core';
 
@@ -25,7 +26,7 @@ export class RgbppClient {
 
   constructor(config: RgbppClientConfig) {
     this.ckbClient = new CkbClient(config.ckbNetwork, config.ckbPrivateKey);
-    this.btcClient = new BtcClient(config.btcNetwork);
+    this.btcClient = new BtcClient(config.btcNetwork, config.btcAssetsApiConfig, config.btcAccountConfig);
   }
 
   static newCkbTransaction(tx: ccc.TransactionLike = {}) {
@@ -42,6 +43,18 @@ export class RgbppClient {
 
   getBtcClient() {
     return this.btcClient;
+  }
+
+  async getRgbppSpvProof(btcTxId: string, confirmations: number) {
+    return await this.btcClient.getRgbppSpvProof(btcTxId, confirmations);
+  }
+
+  async sendCkbTransaction(tx: ccc.TransactionLike, config?: CkbWaitTransactionConfig) {
+    return this.ckbClient.sendTransaction(tx, config);
+  }
+
+  async sendBtcTransaction(psbt: bitcoin.Psbt) {
+    return this.btcClient.sendTransaction(psbt);
   }
 
   async generateXudtLaunchPartialCkbTx(
@@ -169,8 +182,10 @@ export class RgbppClient {
   }
 }
 
-type RgbppClientConfig = {
+export type RgbppClientConfig = {
   ckbNetwork: CkbNetwork;
+  ckbPrivateKey: string;
   btcNetwork: BtcNetwork;
-  ckbPrivateKey?: string;
+  btcAssetsApiConfig: BtcAssetsApiConfig;
+  btcAccountConfig: BtcAccountConfig;
 };

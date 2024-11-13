@@ -8,7 +8,17 @@ import {
   ckbNetwork,
 } from 'rgbpp/ckb';
 import { RGBPP_TOKEN_INFO } from './0-rgbpp-token-info';
-import { BTC_TESTNET_TYPE, CKB_PRIVATE_KEY, ckbAddress, isMainnet } from '../../env';
+import {
+  BTC_TESTNET_TYPE,
+  CKB_PRIVATE_KEY,
+  ckbAddress,
+  isMainnet,
+  BTC_SERVICE_URL,
+  BTC_SERVICE_TOKEN,
+  BTC_SERVICE_ORIGIN,
+  BTC_PRIVATE_KEY,
+  BTC_ADDRESS_TYPE,
+} from '../../env';
 
 // * TODO REMOVE
 import { scriptToHash } from '@nervosnetwork/ckb-sdk-utils';
@@ -33,6 +43,16 @@ const prepareLaunchCell = async ({
     ckbNetwork: ckbNetwork(ckbAddress),
     ckbPrivateKey: CKB_PRIVATE_KEY,
     btcNetwork: BTC_TESTNET_TYPE,
+    btcAssetsApiConfig: {
+      url: BTC_SERVICE_URL,
+      token: BTC_SERVICE_TOKEN,
+      origin: BTC_SERVICE_ORIGIN,
+    },
+    btcAccountConfig: {
+      privateKey: BTC_PRIVATE_KEY,
+      addressType: BTC_ADDRESS_TYPE,
+      networkType: BTC_TESTNET_TYPE,
+    },
   });
   const ckbClient = rgbppClient.getCkbClient();
 
@@ -68,8 +88,11 @@ const prepareLaunchCell = async ({
   });
   await tx.completeFeeBy(ckbSigner);
 
-  const txHash = await ckbSigner.sendTransaction(tx);
-  await ckbSigner.client.waitTransaction(txHash, 0, 60000);
+  const { txHash } = await rgbppClient.sendCkbTransaction(tx, {
+    confirmations: 0,
+    timeout: 60000,
+  });
+
   console.info(`(ccc) Launch cell has been created and the CKB tx hash is ${txHash}`);
 
   console.log(`Execute the following command to launch the RGB++ xUDT asset:\n`);

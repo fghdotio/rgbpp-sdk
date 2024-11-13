@@ -43,6 +43,7 @@ export const BTC_TESTNET_TYPE = process.env.BTC_TESTNET_TYPE! as BTCTestnetType;
 export const BTC_SERVICE_URL = process.env.VITE_BTC_SERVICE_URL!;
 export const BTC_SERVICE_TOKEN = process.env.VITE_BTC_SERVICE_TOKEN!;
 export const BTC_SERVICE_ORIGIN = process.env.VITE_BTC_SERVICE_ORIGIN!;
+export const BTC_ADDRESS_TYPE = process.env.BTC_ADDRESS_TYPE!;
 
 // Read more about the available address types:
 // - P2WPKH: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh
