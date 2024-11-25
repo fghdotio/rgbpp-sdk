@@ -1,22 +1,22 @@
 import { ccc } from '@ckb-ccc/core';
 
-import { IRpcClient, ISigner, IXudtPartialTxBuilder, ISporePartialTxBuilder } from './interfaces';
+import { ICkbClient, IRpcClient, ISigner, IXudtTxBuilder, ISporePartialTxBuilder } from './interfaces';
 import { CkbWaitTransactionConfig } from './types';
-
-import { buildRgbppLockArgs, buildPreLockArgs } from '../utils';
-import { CkbNetwork, getRgbppLockScript } from '../constants';
-import { BTCTestnetType } from '../types';
-
-export class CkbClient2 {
+import { XudtCkbTxBuilder } from './xudt';
+import { SporePartialCkbTxBuilder } from './spore';
+import { CkbNetwork } from '../constants';
+import { BTCTestnetType, RgbppTokenInfo } from '../types';
+import { CkbSigner } from './signer';
+export class CkbClient2 implements ICkbClient {
   constructor(
     private readonly network: CkbNetwork,
     private readonly rpcClient: IRpcClient,
     private readonly signer: ISigner,
-    private readonly xudtPartialTxBuilder: IXudtPartialTxBuilder,
+    private readonly xudtTxBuilder: IXudtTxBuilder,
     private readonly sporePartialTxBuilder: ISporePartialTxBuilder,
   ) {}
 
-  static newTransaction(tx: ccc.TransactionLike = {}) {
+  newTransaction(tx: ccc.TransactionLike = {}) {
     return ccc.Transaction.from(tx);
   }
 
@@ -24,16 +24,12 @@ export class CkbClient2 {
     return this.network;
   }
 
-  getRpcClient() {
-    return this.rpcClient;
-  }
-
-  getSigner() {
-    return this.signer;
+  private getSigner() {
+    return this.signer.getSigner();
   }
 
   getXudtPartialTxBuilder() {
-    return this.xudtPartialTxBuilder;
+    return this.xudtTxBuilder;
   }
 
   getSporePartialTxBuilder() {
@@ -44,18 +40,8 @@ export class CkbClient2 {
     return this.network === 'mainnet';
   }
 
-  async sendTransaction(tx: ccc.TransactionLike, config?: CkbWaitTransactionConfig) {
-    const txHash = await this.signer.sendTransaction(tx);
-    let res;
-    if (config) {
-      res = await this.rpcClient.waitTransaction(txHash, config.confirmations, config.timeout, config.interval);
-    } else {
-      res = await this.rpcClient.waitTransaction(txHash);
-    }
-    return {
-      txHash,
-      res,
-    };
+  async signAndSendTransaction(tx: ccc.TransactionLike, config?: CkbWaitTransactionConfig) {
+    return this.signer.signAndSendTransaction(tx, config);
   }
 
   async addCellDepsOfKnownScripts(tx: ccc.Transaction, knownScript: ccc.KnownScript) {
@@ -66,30 +52,38 @@ export class CkbClient2 {
     }
   }
 
-  generateRgbppLockScript(btcOutIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType) {
-    let rgbppLockArgs: string;
-    if (btcTxId) {
-      rgbppLockArgs = buildRgbppLockArgs(btcOutIndex, btcTxId);
-    } else {
-      rgbppLockArgs = buildPreLockArgs(btcOutIndex);
-    }
-    const rgbppLockScript = getRgbppLockScript(this.isOnMainnet(), btcTestnetType);
-    return ccc.Script.from({
-      ...rgbppLockScript,
-      args: rgbppLockArgs,
+  generateRgbppLockScript(btcOutIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType): ccc.Script {
+    return this.xudtTxBuilder.generateRgbppLockScript(btcOutIndex, btcTxId, btcTestnetType);
+  }
+
+  async issuancePreparationTx(
+    tokenInfo: RgbppTokenInfo,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<ccc.Transaction> {
+    const tx = this.xudtTxBuilder.issuancePreparationTx(tokenInfo, btcTxId, btcOutIdx, btcTestnetType);
+
+    await tx.completeInputsByCapacity(this.getSigner(), 0, {
+      scriptLenRange: [0, 1],
+      outputDataLenRange: [0, 1],
     });
+    await tx.completeFeeBy(this.getSigner());
+
+    return tx;
   }
 }
 
 export function createCkbClient(ckbNetwork: CkbNetwork, ckbPrivateKey: string): CkbClient2 {
-  const cccClient = ckbNetwork === 'mainnet' ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
+  const isOnMainnet = ckbNetwork === 'mainnet';
+  const rpcClient = isOnMainnet ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
 
-  const rpcClient = new CccRpcClientAdapter(cccClient);
-  const signer = new ccc.SignerCkbPrivateKey(cccClient, ckbPrivateKey);
-  const xudtPartialTxBuilder = new XudtPartialCkbTxBuilder(cccClient);
-  const sporePartialTxBuilder = new SporePartialCkbTxBuilder(cccClient);
+  const rpcClientAdapter = new CccRpcClientAdapter(rpcClient);
+  const signer = new CkbSigner(new ccc.SignerCkbPrivateKey(rpcClient, ckbPrivateKey));
+  const xudtTxBuilder = new XudtCkbTxBuilder(isOnMainnet);
+  const sporePartialTxBuilder = new SporePartialCkbTxBuilder(rpcClient);
 
-  return new CkbClient2(ckbNetwork, rpcClient, signer, xudtPartialTxBuilder, sporePartialTxBuilder);
+  return new CkbClient2(ckbNetwork, rpcClientAdapter, signer, xudtTxBuilder, sporePartialTxBuilder);
 }
 
 export class CccRpcClientAdapter implements IRpcClient {
@@ -102,61 +96,5 @@ export class CccRpcClientAdapter implements IRpcClient {
     interval?: number,
   ): Promise<ccc.ClientTransactionResponse | undefined> {
     return this.client.waitTransaction(txHash, confirmations, timeout, interval);
-  }
-}
-
-export class XudtPartialCkbTxBuilder implements IXudtPartialTxBuilder {
-  constructor(private client: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet) {}
-
-  async issuanceTx() {
-    throw new Error('Not implemented');
-  }
-
-  async transferTx() {
-    throw new Error('Not implemented');
-  }
-
-  async batchTransferTx() {
-    throw new Error('Not implemented');
-  }
-
-  async leapFromBtcToCkbTx() {
-    throw new Error('Not implemented');
-  }
-
-  async btcTimeCellsSpentTx() {
-    throw new Error('Not implemented');
-  }
-
-  async leapFromCkbToBtcTx() {
-    throw new Error('Not implemented');
-  }
-}
-
-export class SporePartialCkbTxBuilder implements ISporePartialTxBuilder {
-  constructor(private client: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet) {}
-
-  async createClusterTx() {
-    throw new Error('Not implemented');
-  }
-
-  async transferTx() {
-    throw new Error('Not implemented');
-  }
-
-  async leapFromBtcToCkbTx() {
-    throw new Error('Not implemented');
-  }
-
-  async btcTimeCellsSpentTx() {
-    throw new Error('Not implemented');
-  }
-
-  async creationTx() {
-    throw new Error('Not implemented');
-  }
-
-  async leapFromCkbToBtcTx() {
-    throw new Error('Not implemented');
   }
 }

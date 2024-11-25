@@ -48,10 +48,6 @@ export class CkbClient {
     return new ccc.SignerCkbPrivateKey(this.rpcClient, ckbPrivateKey);
   }
 
-  getRpcClient() {
-    return this.rpcClient;
-  }
-
   getSigner() {
     return this.signer;
   }
@@ -145,3 +141,4 @@ export class SporePartialCkbTxBuilder {
 }
 
 export * from './ckb';
+export * from './interfaces';

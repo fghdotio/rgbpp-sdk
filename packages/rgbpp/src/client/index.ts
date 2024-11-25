@@ -197,3 +197,5 @@ export type RgbppClientConfig = {
   btcAssetsApiConfig: BtcAssetsApiConfig;
   btcAccountConfig: BtcAccountConfig;
 };
+
+export * from './rgbpp';

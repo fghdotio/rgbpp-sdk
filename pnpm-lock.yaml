@@ -138,12 +138,18 @@ importers:
 
   examples/rgbpp:
     dependencies:
+      '@ckb-ccc/core':
+        specifier: link:/root/ckb/ccc/packages/core
+        version: link:../../../ccc/packages/core
       '@nervosnetwork/ckb-sdk-utils':
         specifier: 0.109.3
         version: 0.109.3
       rgbpp:
         specifier: workspace:*
         version: link:../../packages/rgbpp
+      rgbpp-examples:
+        specifier: 'file:'
+        version: file:examples/rgbpp
     devDependencies:
       '@types/dotenv':
         specifier: ^8.2.0
@@ -173,12 +179,18 @@ importers:
       '@bitcoinerlab/secp256k1':
         specifier: ^1.1.1
         version: 1.1.1
+      '@ckb-ccc/core':
+        specifier: link:/root/ckb/ccc/packages/core
+        version: link:../../../ccc/packages/core
       '@ckb-lumos/codec':
         specifier: 0.22.2
         version: 0.22.2
       '@nervosnetwork/ckb-types':
         specifier: 0.109.3
         version: 0.109.3
+      '@rgbpp-sdk/btc':
+        specifier: 'file:'
+        version: file:packages/btc
       '@rgbpp-sdk/ckb':
         specifier: workspace:^
         version: link:../ckb
@@ -203,6 +215,9 @@ importers:
 
   packages/ckb:
     dependencies:
+      '@ckb-ccc/core':
+        specifier: link:/root/ckb/ccc/packages/core
+        version: link:../../../ccc/packages/core
       '@ckb-lumos/base':
         specifier: ^0.22.2
         version: 0.22.2
@@ -221,6 +236,9 @@ importers:
       '@nervosnetwork/ckb-types':
         specifier: 0.109.3
         version: 0.109.3
+      '@rgbpp-sdk/ckb':
+        specifier: 'file:'
+        version: file:packages/ckb(@ckb-lumos/lumos@0.22.0-next.5)(lodash@4.17.21)
       '@rgbpp-sdk/service':
         specifier: workspace:^
         version: link:../service
@@ -243,6 +261,9 @@ importers:
 
   packages/rgbpp:
     dependencies:
+      '@ckb-ccc/core':
+        specifier: link:/root/ckb/ccc/packages/core
+        version: link:../../../ccc/packages/core
       '@ckb-lumos/base':
         specifier: ^0.22.2
         version: 0.22.2
@@ -261,6 +282,9 @@ importers:
       '@rgbpp-sdk/service':
         specifier: workspace:*
         version: link:../service
+      rgbpp:
+        specifier: 'file:'
+        version: file:packages/rgbpp
     devDependencies:
       '@types/node':
         specifier: ^20.3.1
@@ -953,6 +977,7 @@ packages:
   '@exact-realty/multipart-parser@1.0.14':
     resolution: {integrity: sha512-ln1+s1XOvRY9NRof3lpjWJZfSoV5XOWdVgK7sYeE3TAt0brtB+pIPJpSbxaol/490re2rcMEo24VZXeffKm8Aw==}
     engines: {node: '>=16.0.0', npm: '>=8.0.0'}
+    deprecated: Package has moved to @apeleghq/multipart-parser
 
   '@fastify/ajv-compiler@3.6.0':
     resolution: {integrity: sha512-LwdXQJjmMD+GwLOkP7TVC68qa+pSSogeWWmznRJ/coyTcfe9qA05AHFSe1eZFwK6q+xVRpChnvFUkf1iYaSZsQ==}
@@ -1153,6 +1178,12 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
+
+  '@rgbpp-sdk/btc@file:packages/btc':
+    resolution: {directory: packages/btc, type: directory}
+
+  '@rgbpp-sdk/ckb@file:packages/ckb':
+    resolution: {directory: packages/ckb, type: directory}
 
   '@rollup/pluginutils@5.1.0':
     resolution: {integrity: sha512-XTIWOPPcpvyKI6L1NHo0lFlCyznUEyPmPY1mc3KpPVDYulHSTvyeLNVW00QTLIAFNhR3kYnJTQHeGqU4M3n09g==}
@@ -2102,6 +2133,7 @@ packages:
   eslint@8.57.0:
     resolution: {integrity: sha512-dZ6+mexnaTIbSBZWgou51U6OmzIhYM2VcNdtiTtI7qPNZm35Akpr0f6vtw3w1Kmn5PYo+tZVfh13WrhpS6oLqQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -3183,6 +3215,12 @@ packages:
 
   rfdc@1.4.1:
     resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
+
+  rgbpp-examples@file:examples/rgbpp:
+    resolution: {directory: examples/rgbpp, type: directory}
+
+  rgbpp@file:packages/rgbpp:
+    resolution: {directory: packages/rgbpp, type: directory}
 
   rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
@@ -4733,6 +4771,39 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
+
+  '@rgbpp-sdk/btc@file:packages/btc':
+    dependencies:
+      '@bitcoinerlab/secp256k1': 1.1.1
+      '@ckb-ccc/core': link:../ccc/packages/core
+      '@ckb-lumos/codec': 0.22.2
+      '@nervosnetwork/ckb-types': 0.109.3
+      '@rgbpp-sdk/ckb': link:packages/ckb
+      '@rgbpp-sdk/service': link:packages/service
+      bip32: 4.0.0
+      bitcoinjs-lib: 6.1.6
+      ecpair: 2.1.0
+      lodash: 4.17.21
+      p-limit: 3.1.0
+
+  '@rgbpp-sdk/ckb@file:packages/ckb(@ckb-lumos/lumos@0.22.0-next.5)(lodash@4.17.21)':
+    dependencies:
+      '@ckb-ccc/core': link:../ccc/packages/core
+      '@ckb-lumos/base': 0.22.2
+      '@ckb-lumos/codec': 0.22.2
+      '@exact-realty/multipart-parser': 1.0.14
+      '@nervosnetwork/ckb-sdk-core': 0.109.3
+      '@nervosnetwork/ckb-sdk-utils': 0.109.3
+      '@nervosnetwork/ckb-types': 0.109.3
+      '@rgbpp-sdk/service': link:packages/service
+      '@spore-sdk/core': 0.2.0(@ckb-lumos/lumos@0.22.0-next.5)(lodash@4.17.21)
+      axios: 1.7.2
+      camelcase-keys: 7.0.2
+      js-sha256: 0.11.0
+    transitivePeerDependencies:
+      - '@ckb-lumos/lumos'
+      - debug
+      - lodash
 
   '@rollup/pluginutils@5.1.0(rollup@4.19.0)':
     dependencies:
@@ -6872,6 +6943,22 @@ snapshots:
   reusify@1.0.4: {}
 
   rfdc@1.4.1: {}
+
+  rgbpp-examples@file:examples/rgbpp:
+    dependencies:
+      '@ckb-ccc/core': link:../ccc/packages/core
+      '@nervosnetwork/ckb-sdk-utils': 0.109.3
+      rgbpp: link:packages/rgbpp
+
+  rgbpp@file:packages/rgbpp:
+    dependencies:
+      '@ckb-ccc/core': link:../ccc/packages/core
+      '@ckb-lumos/base': 0.22.2
+      '@ckb-lumos/codec': 0.22.2
+      '@nervosnetwork/ckb-sdk-utils': 0.109.3
+      '@rgbpp-sdk/btc': link:packages/btc
+      '@rgbpp-sdk/ckb': link:packages/ckb
+      '@rgbpp-sdk/service': link:packages/service
 
   rimraf@3.0.2:
     dependencies:

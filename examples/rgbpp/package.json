@@ -10,11 +10,13 @@
     "lint:fix": "tsc && eslint --fix --ext .js,.ts . && prettier --write '**/*.{js,ts}'"
   },
   "dependencies": {
+    "@ckb-ccc/core": "link:/root/ckb/ccc/packages/core",
     "@nervosnetwork/ckb-sdk-utils": "0.109.3",
-    "rgbpp": "workspace:*"
+    "rgbpp": "workspace:*",
+    "rgbpp-examples": "file:"
   },
   "devDependencies": {
-    "dotenv": "^16.4.5",
-    "@types/dotenv": "^8.2.0"
+    "@types/dotenv": "^8.2.0",
+    "dotenv": "^16.4.5"
   }
 }

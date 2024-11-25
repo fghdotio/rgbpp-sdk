@@ -71,3 +71,6 @@ export type BtcAccountConfig = {
   addressType: string;
   networkType: string;
 };
+
+export * from './btc';
+export * from './interfaces';
