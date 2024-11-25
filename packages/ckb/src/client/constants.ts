@@ -1,0 +1,2 @@
+// 0th is OP_RETURN
+export const MAGIC_NUMBER_RGBPP_ISSUANCE_BTC_OUT_INDEX = 1;

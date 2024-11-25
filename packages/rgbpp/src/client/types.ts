@@ -6,6 +6,8 @@ export type RgbppClientConfig = {
   ckbNetwork: CkbNetwork;
   ckbPrivateKey: string;
 
+  ckbJsonRpcUrl?: string;
+
   btcNetwork: BtcNetwork;
   btcAssetsApiConfig: BtcAssetsApiConfig;
   btcAccountConfig: BtcAccountConfig;

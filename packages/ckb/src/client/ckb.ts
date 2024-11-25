@@ -8,6 +8,8 @@ import { CkbNetwork } from '../constants';
 import { BTCTestnetType, RgbppTokenInfo } from '../types';
 import { CkbSigner } from './signer';
 import { CkbTxHash } from './types';
+import { Collector } from '../collector';
+import { RgbppXudtIssuanceResult } from './types';
 
 export class CkbClient2 implements ICkbClient {
   constructor(
@@ -16,10 +18,12 @@ export class CkbClient2 implements ICkbClient {
     private readonly signer: ISigner,
     private readonly xudtTxBuilder: IXudtTxBuilder,
     private readonly sporePartialTxBuilder: ISporePartialTxBuilder,
-    private explorerUrl?: string,
+    private explorerUrl: string,
+
+    private collector: Collector,
   ) {}
 
-  static create(ckbNetwork: CkbNetwork, ckbPrivateKey: string): CkbClient2 {
+  static create(ckbNetwork: CkbNetwork, ckbPrivateKey: string, ckbJsonRpcUrl?: string): CkbClient2 {
     const isOnMainnet = ckbNetwork === 'mainnet';
     const rpcClient = isOnMainnet ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
 
@@ -29,7 +33,25 @@ export class CkbClient2 implements ICkbClient {
     const sporePartialTxBuilder = new SporePartialCkbTxBuilder(rpcClient);
     const explorerUrl = isOnMainnet ? 'https://explorer.nervos.org/' : 'https://testnet.explorer.nervos.org/';
 
-    return new CkbClient2(ckbNetwork, rpcClientAdapter, signer, xudtTxBuilder, sporePartialTxBuilder, explorerUrl);
+    let jsonRpcUrl: string;
+    if (ckbJsonRpcUrl) {
+      jsonRpcUrl = ckbJsonRpcUrl;
+    } else {
+      jsonRpcUrl = isOnMainnet ? 'https://mainnet.ckb.dev/' : 'https://testnet.ckb.dev/';
+    }
+    // https://docs.nervos.org/docs/node/rpcs#public-json-rpc-nodes
+    // also the indexer url
+    const collector = new Collector({ ckbNodeUrl: jsonRpcUrl, ckbIndexerUrl: jsonRpcUrl });
+
+    return new CkbClient2(
+      ckbNetwork,
+      rpcClientAdapter,
+      signer,
+      xudtTxBuilder,
+      sporePartialTxBuilder,
+      explorerUrl,
+      collector,
+    );
   }
 
   getNetwork() {
@@ -78,7 +100,7 @@ export class CkbClient2 implements ICkbClient {
     return this.xudtTxBuilder.generateRgbppLockScript(btcOutIndex, btcTxId, btcTestnetType);
   }
 
-  async issuancePreparationTx(
+  async xudtIssuancePreparationTx(
     tokenInfo: RgbppTokenInfo,
     btcTxId: string,
     btcOutIdx: number,
@@ -93,6 +115,36 @@ export class CkbClient2 implements ICkbClient {
     await tx.completeFeeBy(this.getSigner());
 
     return tx;
+  }
+
+  async xudtIssuanceTx(
+    tokenInfo: RgbppTokenInfo,
+    amount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType: BTCTestnetType,
+    feeRate?: bigint,
+  ): Promise<RgbppXudtIssuanceResult> {
+    const res = await this.xudtTxBuilder.issuanceTx(
+      this.collector,
+      tokenInfo,
+      amount,
+      btcTxId,
+      btcOutIdx,
+      this.isOnMainnet(),
+      btcTestnetType,
+      feeRate,
+    );
+
+    const typeArgs = res.ckbRawTx.outputs[0].type?.args;
+    if (!typeArgs) {
+      throw new Error('Expected type args in first output of issuance transaction');
+    }
+
+    return {
+      rgbppLaunchVirtualTxResult: res,
+      rgbppXudtUniqueId: typeArgs,
+    };
   }
 }
 

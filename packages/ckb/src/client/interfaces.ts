@@ -2,6 +2,9 @@ import { ccc } from '@ckb-ccc/core';
 
 import { CkbWaitTransactionConfig, CkbTxHash } from './types';
 import { RgbppTokenInfo, BTCTestnetType } from '../types';
+import { Collector } from '../collector';
+import { RgbppXudtIssuanceResult } from './types';
+import { RgbppLaunchVirtualTxResult } from '../types';
 
 export interface ICkbClient {
   generateRgbppLockScript(outIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType): ccc.Script;
@@ -16,12 +19,21 @@ export interface ICkbClient {
     res: ccc.ClientTransactionResponse | undefined;
   }>;
 
-  issuancePreparationTx(
+  xudtIssuancePreparationTx(
     tokenInfo: RgbppTokenInfo,
     btcTxId: string,
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
   ): Promise<ccc.Transaction>;
+
+  xudtIssuanceTx(
+    tokenInfo: RgbppTokenInfo,
+    amount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType: BTCTestnetType | undefined,
+    feeRate?: bigint,
+  ): Promise<RgbppXudtIssuanceResult>;
 }
 
 export interface IRpcClient {
@@ -55,7 +67,17 @@ export interface IXudtTxBuilder {
   ): ccc.Transaction;
 
   // partial tx
-  issuanceTx(): Promise<void>;
+  issuanceTx(
+    collector: Collector,
+    tokenInfo: RgbppTokenInfo,
+    amount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    isOnMainnet: boolean,
+    btcTestnetType: BTCTestnetType,
+    feeRate?: bigint,
+  ): Promise<RgbppLaunchVirtualTxResult>;
+
   transferTx(): Promise<void>;
   batchTransferTx(): Promise<void>;
   leapFromBtcToCkbTx(): Promise<void>;

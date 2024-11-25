@@ -13,7 +13,7 @@ export class RgbppClient2 {
   ) {}
 
   static create(config: RgbppClientConfig): RgbppClient2 {
-    const ckbClient = CkbClient2.create(config.ckbNetwork, config.ckbPrivateKey);
+    const ckbClient = CkbClient2.create(config.ckbNetwork, config.ckbPrivateKey, config.ckbJsonRpcUrl);
     const btcClient = BtcClient2.create(config.btcNetwork);
 
     return new RgbppClient2(ckbClient, btcClient);
@@ -37,7 +37,17 @@ export class RgbppClient2 {
     return this.ckbClient.generateRgbppLockScript(susBtcOutIndex, susBtcTxId, this.getBtcTestnetType());
   }
 
-  async issuancePreparationCkbTx(tokenInfo: RgbppTokenInfo, btcTxId: string, btcOutIdx: number) {
-    return this.ckbClient.issuancePreparationTx(tokenInfo, btcTxId, btcOutIdx, this.getBtcTestnetType());
+  async xudtIssuancePreparationCkbTx(tokenInfo: RgbppTokenInfo, btcTxId: string, btcOutIdx: number) {
+    return this.ckbClient.xudtIssuancePreparationTx(tokenInfo, btcTxId, btcOutIdx, this.getBtcTestnetType());
+  }
+
+  async xudtIssuanceCkbTx(
+    tokenInfo: RgbppTokenInfo,
+    amount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    feeRate?: bigint,
+  ) {
+    return this.ckbClient.xudtIssuanceTx(tokenInfo, amount, btcTxId, btcOutIdx, this.getBtcTestnetType(), feeRate);
   }
 }

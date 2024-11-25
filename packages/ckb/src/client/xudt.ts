@@ -6,7 +6,9 @@ import { calculateRgbppCellCapacity, calculateRgbppTokenInfoCellCapacity } from 
 import { buildRgbppLockArgs, buildPreLockArgs } from '../utils/rgbpp';
 import { BTCTestnetType } from '../types';
 import { getRgbppLockScript } from '../constants';
-
+import { genRgbppLaunchCkbVirtualTx } from '../rgbpp';
+import { Collector } from '../collector';
+import { RgbppLaunchVirtualTxResult } from '../types';
 export class XudtCkbTxBuilder implements IXudtTxBuilder {
   constructor(private isOnMainnet: boolean) {}
 
@@ -47,8 +49,26 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     return tx;
   }
 
-  async issuanceTx() {
-    throw new Error('Not implemented');
+  async issuanceTx(
+    collector: Collector,
+    tokenInfo: RgbppTokenInfo,
+    amount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    isOnMainnet: boolean,
+    btcTestnetType: BTCTestnetType | undefined,
+    feeRate?: bigint,
+  ): Promise<RgbppLaunchVirtualTxResult> {
+    const rgbppXudtOwnerLockArgs = buildRgbppLockArgs(btcOutIdx, btcTxId);
+    return await genRgbppLaunchCkbVirtualTx({
+      collector,
+      ownerRgbppLockArgs: rgbppXudtOwnerLockArgs,
+      rgbppTokenInfo: tokenInfo,
+      launchAmount: amount,
+      isMainnet: isOnMainnet,
+      btcTestnetType,
+      ckbFeeRate: feeRate,
+    });
   }
 
   async transferTx() {

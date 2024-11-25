@@ -14,10 +14,10 @@ import {
   BTC_ADDRESS_TYPE,
 } from '../../env';
 
-const prepareLaunchCell = async ({ btcTxId, btcOutIdxStr }: { btcTxId: string; btcOutIdxStr: string }) => {
+const prepareIssuanceCell = async ({ btcTxId, btcOutIdxStr }: { btcTxId: string; btcOutIdxStr: string }) => {
   const btcOutIdx = parseInt(btcOutIdxStr);
   if (isNaN(btcOutIdx)) {
-    throw new Error('RGBPP_XUDT_LAUNCH_BTC_OUT_INDEX is not a number');
+    throw new Error('RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX is not a number');
   }
 
   const rgbppClient = RgbppClient2.create({
@@ -36,24 +36,24 @@ const prepareLaunchCell = async ({ btcTxId, btcOutIdxStr }: { btcTxId: string; b
     },
   });
 
-  const tx = await rgbppClient.issuancePreparationCkbTx(RGBPP_TOKEN_INFO, btcTxId, btcOutIdx);
+  const tx = await rgbppClient.xudtIssuancePreparationCkbTx(RGBPP_TOKEN_INFO, btcTxId, btcOutIdx);
   const { txHash } = await rgbppClient.signAndSendCkbTransaction(tx, {
     confirmations: 0,
     timeout: 60000,
   });
 
-  console.info(`Launch cell has been created and the CKB tx hash is ${txHash}`);
+  console.info(`RGB++ issuance cell has been created: ${txHash}`);
 
-  console.log(`Execute the following command to launch the RGB++ xUDT asset:\n`);
+  console.log(`Execute the following command to issue the RGB++ xUDT asset:\n`);
   console.log(
-    `RGBPP_XUDT_LAUNCH_BTC_TX_ID=${btcTxId} RGBPP_XUDT_LAUNCH_BTC_OUT_INDEX=${btcOutIdxStr} npx tsx xudt/launch/2-launch-rgbpp-rft.ts`,
+    `RGBPP_XUDT_ISSUANCE_BTC_TX_ID=${btcTxId} RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=${btcOutIdxStr} npx tsx xudt/launch/2-launch-rgbpp-rft.ts`,
   );
 };
 
-prepareLaunchCell({
+prepareIssuanceCell({
   // * Single-Use Seal
-  btcTxId: process.env.RGBPP_XUDT_LAUNCH_BTC_TX_ID!,
-  btcOutIdxStr: process.env.RGBPP_XUDT_LAUNCH_BTC_OUT_INDEX!,
+  btcTxId: process.env.RGBPP_XUDT_ISSUANCE_BTC_TX_ID!,
+  btcOutIdxStr: process.env.RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX!,
 })
   .then(() => {
     process.exit(0);
@@ -65,8 +65,8 @@ prepareLaunchCell({
 
 /* 
 Usage:
-RGBPP_XUDT_LAUNCH_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_LAUNCH_BTC_OUT_INDEX=<btc_out_index> npx tsx xudt/launch/1-prepare-launch-rft.ts
+RGBPP_XUDT_ISSUANCE_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=<btc_out_index> npx tsx xudt/launch/1-prepare-launch-rft.ts
 
 Example:
-RGBPP_XUDT_LAUNCH_BTC_TX_ID=abc123... RGBPP_XUDT_LAUNCH_BTC_OUT_INDEX=0 npx tsx xudt/launch/1-prepare-launch-rft.ts
+RGBPP_XUDT_ISSUANCE_BTC_TX_ID=abc123... RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=0 npx tsx xudt/launch/1-prepare-launch-rft.ts
 */

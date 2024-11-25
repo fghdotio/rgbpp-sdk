@@ -1,3 +1,5 @@
+import { RgbppLaunchVirtualTxResult } from '../types/rgbpp';
+
 export type CkbWaitTransactionConfig = {
   confirmations?: number;
   timeout?: number;
@@ -22,3 +24,8 @@ export class CkbTxHash {
     return this.explorerUrl() ?? this.txHash;
   }
 }
+
+export type RgbppXudtIssuanceResult = {
+  rgbppLaunchVirtualTxResult: RgbppLaunchVirtualTxResult;
+  rgbppXudtUniqueId: string;
+};
