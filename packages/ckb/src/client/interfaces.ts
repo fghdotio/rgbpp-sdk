@@ -1,6 +1,6 @@
 import { ccc } from '@ckb-ccc/core';
 
-import { CkbWaitTransactionConfig } from './types';
+import { CkbWaitTransactionConfig, CkbTxHash } from './types';
 import { RgbppTokenInfo, BTCTestnetType } from '../types';
 
 export interface ICkbClient {
@@ -12,7 +12,7 @@ export interface ICkbClient {
     tx: ccc.TransactionLike,
     config?: CkbWaitTransactionConfig,
   ): Promise<{
-    txHash: string;
+    txHash: CkbTxHash | string;
     res: ccc.ClientTransactionResponse | undefined;
   }>;
 
@@ -39,7 +39,7 @@ export interface ISigner {
     tx: ccc.TransactionLike,
     config?: CkbWaitTransactionConfig,
   ): Promise<{
-    txHash: string;
+    txHash: CkbTxHash | string;
     res: ccc.ClientTransactionResponse | undefined;
   }>;
 }

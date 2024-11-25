@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { createCkbClient } from '.';
+import { CkbClient2, ICkbClient } from '.';
 
 import { scriptToHash } from '@nervosnetwork/ckb-sdk-utils';
 import { genRgbppLockScript, buildRgbppLockArgs, buildPreLockArgs } from '../utils';
@@ -8,7 +8,7 @@ import { BTCTestnetType } from '../types';
 
 describe('ckb', () => {
   const verifyRgbppLockScript = (
-    client: ReturnType<typeof createCkbClient>,
+    client: ICkbClient,
     btcOutIndex: number,
     btcTxId?: string,
     btcNetworkType?: BTCTestnetType,
@@ -31,7 +31,7 @@ describe('ckb', () => {
     const BTC_OUT_INDEX = 1;
 
     describe('testnet', () => {
-      const clientTestnet = createCkbClient('testnet', TEST_PRIVATE_KEY);
+      const clientTestnet = CkbClient2.create('testnet', TEST_PRIVATE_KEY);
 
       it('should generate correct lock script for BTC Testnet3', () => {
         verifyRgbppLockScript(clientTestnet, BTC_OUT_INDEX, TEST_BTC_TX_ID, 'Testnet3');
@@ -51,7 +51,7 @@ describe('ckb', () => {
     });
 
     describe('mainnet', () => {
-      const clientMainnet = createCkbClient('mainnet', TEST_PRIVATE_KEY);
+      const clientMainnet = CkbClient2.create('mainnet', TEST_PRIVATE_KEY);
 
       it('should generate correct lock script for BTC Mainnet', () => {
         verifyRgbppLockScript(clientMainnet, BTC_OUT_INDEX, TEST_BTC_TX_ID);

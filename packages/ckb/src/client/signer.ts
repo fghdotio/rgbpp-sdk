@@ -1,7 +1,7 @@
 import { ccc } from '@ckb-ccc/core';
 
 import { ISigner } from './interfaces';
-import { CkbWaitTransactionConfig } from './types';
+import { CkbWaitTransactionConfig, CkbTxHash } from './types';
 
 export class CkbSigner implements ISigner {
   constructor(private signer: ccc.SignerCkbPrivateKey) {}
@@ -14,7 +14,7 @@ export class CkbSigner implements ISigner {
     tx: ccc.TransactionLike,
     config?: CkbWaitTransactionConfig,
   ): Promise<{
-    txHash: string;
+    txHash: CkbTxHash | string;
     res: ccc.ClientTransactionResponse | undefined;
   }> {
     const txHash = await this.signer.sendTransaction(tx);

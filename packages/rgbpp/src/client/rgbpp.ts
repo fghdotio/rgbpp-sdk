@@ -1,6 +1,6 @@
 import { ccc } from '@ckb-ccc/core';
 
-import { ICkbClient, createCkbClient, CkbWaitTransactionConfig, RgbppTokenInfo } from '@rgbpp-sdk/ckb';
+import { ICkbClient, CkbClient2, CkbWaitTransactionConfig, RgbppTokenInfo, CkbTxHash } from '@rgbpp-sdk/ckb';
 
 import { IBtcClient, BtcClient2 } from '@rgbpp-sdk/btc';
 
@@ -13,13 +13,19 @@ export class RgbppClient2 {
   ) {}
 
   static create(config: RgbppClientConfig): RgbppClient2 {
-    const ckbClient = createCkbClient(config.ckbNetwork, config.ckbPrivateKey);
+    const ckbClient = CkbClient2.create(config.ckbNetwork, config.ckbPrivateKey);
     const btcClient = BtcClient2.create(config.btcNetwork);
 
     return new RgbppClient2(ckbClient, btcClient);
   }
 
-  async signAndSendCkbTransaction(tx: ccc.TransactionLike, config?: CkbWaitTransactionConfig) {
+  async signAndSendCkbTransaction(
+    tx: ccc.TransactionLike,
+    config?: CkbWaitTransactionConfig,
+  ): Promise<{
+    txHash: CkbTxHash | string;
+    res: ccc.ClientTransactionResponse | undefined;
+  }> {
     return this.ckbClient.signAndSendTransaction(tx, config);
   }
 

@@ -24,6 +24,10 @@ export class CkbClient {
 
   static calculateCommitment() {}
 
+  getRpcClient() {
+    return this.rpcClient;
+  }
+
   getNetwork() {
     return this.network;
   }
@@ -142,3 +146,4 @@ export class SporePartialCkbTxBuilder {
 
 export * from './ckb';
 export * from './interfaces';
+export * from './types';

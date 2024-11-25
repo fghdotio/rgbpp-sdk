@@ -42,7 +42,7 @@ const prepareLaunchCell = async ({ btcTxId, btcOutIdxStr }: { btcTxId: string; b
     timeout: 60000,
   });
 
-  console.info(`(ccc) Launch cell has been created and the CKB tx hash is ${txHash}`);
+  console.info(`Launch cell has been created and the CKB tx hash is ${txHash}`);
 
   console.log(`Execute the following command to launch the RGB++ xUDT asset:\n`);
   console.log(

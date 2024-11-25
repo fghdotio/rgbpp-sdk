@@ -7,6 +7,8 @@ import { SporePartialCkbTxBuilder } from './spore';
 import { CkbNetwork } from '../constants';
 import { BTCTestnetType, RgbppTokenInfo } from '../types';
 import { CkbSigner } from './signer';
+import { CkbTxHash } from './types';
+
 export class CkbClient2 implements ICkbClient {
   constructor(
     private readonly network: CkbNetwork,
@@ -14,10 +16,20 @@ export class CkbClient2 implements ICkbClient {
     private readonly signer: ISigner,
     private readonly xudtTxBuilder: IXudtTxBuilder,
     private readonly sporePartialTxBuilder: ISporePartialTxBuilder,
+    private explorerUrl?: string,
   ) {}
 
-  newTransaction(tx: ccc.TransactionLike = {}) {
-    return ccc.Transaction.from(tx);
+  static create(ckbNetwork: CkbNetwork, ckbPrivateKey: string): CkbClient2 {
+    const isOnMainnet = ckbNetwork === 'mainnet';
+    const rpcClient = isOnMainnet ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
+
+    const rpcClientAdapter = new CccRpcClientAdapter(rpcClient);
+    const signer = new CkbSigner(new ccc.SignerCkbPrivateKey(rpcClient, ckbPrivateKey));
+    const xudtTxBuilder = new XudtCkbTxBuilder(isOnMainnet);
+    const sporePartialTxBuilder = new SporePartialCkbTxBuilder(rpcClient);
+    const explorerUrl = isOnMainnet ? 'https://explorer.nervos.org/' : 'https://testnet.explorer.nervos.org/';
+
+    return new CkbClient2(ckbNetwork, rpcClientAdapter, signer, xudtTxBuilder, sporePartialTxBuilder, explorerUrl);
   }
 
   getNetwork() {
@@ -40,8 +52,18 @@ export class CkbClient2 implements ICkbClient {
     return this.network === 'mainnet';
   }
 
-  async signAndSendTransaction(tx: ccc.TransactionLike, config?: CkbWaitTransactionConfig) {
-    return this.signer.signAndSendTransaction(tx, config);
+  async signAndSendTransaction(
+    tx: ccc.TransactionLike,
+    config?: CkbWaitTransactionConfig,
+  ): Promise<{
+    txHash: CkbTxHash | string;
+    res: ccc.ClientTransactionResponse | undefined;
+  }> {
+    const { txHash, res } = await this.signer.signAndSendTransaction(tx, config);
+    return {
+      txHash: new CkbTxHash(txHash.toString(), this.explorerUrl!),
+      res,
+    };
   }
 
   async addCellDepsOfKnownScripts(tx: ccc.Transaction, knownScript: ccc.KnownScript) {
@@ -72,18 +94,6 @@ export class CkbClient2 implements ICkbClient {
 
     return tx;
   }
-}
-
-export function createCkbClient(ckbNetwork: CkbNetwork, ckbPrivateKey: string): CkbClient2 {
-  const isOnMainnet = ckbNetwork === 'mainnet';
-  const rpcClient = isOnMainnet ? new ccc.ClientPublicMainnet() : new ccc.ClientPublicTestnet();
-
-  const rpcClientAdapter = new CccRpcClientAdapter(rpcClient);
-  const signer = new CkbSigner(new ccc.SignerCkbPrivateKey(rpcClient, ckbPrivateKey));
-  const xudtTxBuilder = new XudtCkbTxBuilder(isOnMainnet);
-  const sporePartialTxBuilder = new SporePartialCkbTxBuilder(rpcClient);
-
-  return new CkbClient2(ckbNetwork, rpcClientAdapter, signer, xudtTxBuilder, sporePartialTxBuilder);
 }
 
 export class CccRpcClientAdapter implements IRpcClient {
