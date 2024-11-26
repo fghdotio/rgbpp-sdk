@@ -12,6 +12,8 @@ import { Collector } from '../collector';
 import { RgbppXudtIssuanceResult } from './types';
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 import { sendCkbTx } from '../rgbpp';
+import { RgbppBtcAddressReceiver, BtcBatchTransferVirtualTxResult } from '../types';
+
 export class CkbClient2 implements ICkbClient {
   constructor(
     private readonly network: CkbNetwork,
@@ -20,6 +22,7 @@ export class CkbClient2 implements ICkbClient {
     private readonly xudtTxBuilder: IXudtTxBuilder,
     private readonly sporePartialTxBuilder: ISporePartialTxBuilder,
     private explorerBaseUrl: string,
+    private privateKey: string,
 
     private collector: Collector,
   ) {}
@@ -51,6 +54,7 @@ export class CkbClient2 implements ICkbClient {
       xudtTxBuilder,
       sporePartialTxBuilder,
       explorerBaseUrl,
+      ckbPrivateKey,
       collector,
     );
   }
@@ -127,13 +131,33 @@ export class CkbClient2 implements ICkbClient {
     return tx;
   }
 
-  async assembleXudtFinalTx(
+  async assembleXudtIssuanceTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
   ) {
-    return this.xudtTxBuilder.assembleXudtFinalTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+    return this.xudtTxBuilder.assembleXudtIssuanceTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+  }
+
+  async assembleXudtBatchTransferTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    sumInputsCapacity: string,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction> {
+    return this.xudtTxBuilder.assembleXudtBatchTransferTx(
+      rawTx,
+      btcTxId,
+      btcTxBytes,
+      rgbppApiSpvProof,
+      this.privateKey,
+      this.collector,
+      sumInputsCapacity,
+      ckbFeeRate,
+    );
   }
 
   async xudtIssuanceTx(
@@ -150,7 +174,6 @@ export class CkbClient2 implements ICkbClient {
       amount,
       btcTxId,
       btcOutIdx,
-      this.isOnMainnet(),
       btcTestnetType,
       feeRate,
     );
@@ -164,6 +187,21 @@ export class CkbClient2 implements ICkbClient {
       rgbppLaunchVirtualTxResult: res,
       rgbppXudtUniqueId: typeArgs,
     };
+  }
+
+  async xudtBatchTransferTx(
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    rgbppReceivers: RgbppBtcAddressReceiver[],
+    btcTestnetType: BTCTestnetType | undefined,
+  ): Promise<BtcBatchTransferVirtualTxResult> {
+    return this.xudtTxBuilder.batchTransferTx(
+      this.collector,
+      xudtTypeArgs,
+      btcOutpoints,
+      rgbppReceivers,
+      btcTestnetType,
+    );
   }
 }
 

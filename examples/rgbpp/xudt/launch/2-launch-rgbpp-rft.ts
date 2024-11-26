@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { RgbppClient2 } from 'rgbpp';
 
 import { BtcAssetsApiError } from 'rgbpp';
@@ -71,13 +70,18 @@ const issueRgbppAsset = async (args: {
       const rgbppApiSpvProof = await rgbppClient.getRgbppSpvProof(susBtcTxId);
       clearInterval(interval);
 
-      const ckbFinalTx = await rgbppClient.assembleXudtFinalCkbTx(ckbRawTx, susBtcTxId, btcTxBytes, rgbppApiSpvProof);
-      const txHash = await rgbppClient.sendCkbTransaction(ckbFinalTx);
-      console.info(`RGB++ Asset has been issued and CKB tx hash is ${txHash}`);
-
-      console.log(
-        `Execute the following command to distribute the RGB++ asset: (name: ${RGBPP_TOKEN_INFO.name}, symbol: ${RGBPP_TOKEN_INFO.symbol}, decimal: ${RGBPP_TOKEN_INFO.decimal})\n`,
+      const ckbFinalTx = await rgbppClient.assembleXudtIssuanceCkbTx(
+        ckbRawTx,
+        susBtcTxId,
+        btcTxBytes,
+        rgbppApiSpvProof,
       );
+      const txHash = await rgbppClient.sendCkbTransaction(ckbFinalTx);
+      console.info(
+        `RGB++ xUDT token (name: ${RGBPP_TOKEN_INFO.name}, symbol: ${RGBPP_TOKEN_INFO.symbol}, decimal: ${RGBPP_TOKEN_INFO.decimal}) has been issued: ${txHash}`,
+      );
+
+      console.log(`Execute the following command to distribute this RGB++ xUDT token:\n`);
       console.log(
         `RGBPP_XUDT_TRANSFER_BTC_TX_ID=${susBtcTxId.raw()} RGBPP_XUDT_TRANSFER_BTC_OUT_INDEX=${susBtcOutIndex} RGBPP_XUDT_UNIQUE_ID=${rgbppXudtUniqueId} RGBPP_XUDT_TRANSFER_RECEIVERS="<btc_address_1:amount_1;btc_address_2:amount_2;...>" ${btcFeeRate ? `RGBPP_BTC_FEE_RATE=${btcFeeRate}` : ''} npx tsx xudt/launch/3-distribute-rgbpp-rft.ts`,
       );

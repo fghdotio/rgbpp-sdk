@@ -7,6 +7,8 @@ import {
   RgbppTokenInfo,
   CkbTxHash,
   RgbppXudtIssuanceResult,
+  RgbppBtcAddressReceiver,
+  BtcBatchTransferVirtualTxResult,
 } from '@rgbpp-sdk/ckb';
 
 import { IBtcClient, BtcClient2, bitcoin, RgbppUtxoProps, BtcTxHash } from '@rgbpp-sdk/btc';
@@ -54,7 +56,7 @@ export class RgbppClient2 {
     return this.ckbClient.xudtIssuancePreparationTx(tokenInfo, btcTxId, btcOutIdx, this.getBtcTestnetType());
   }
 
-  async assembleXudtFinalCkbTx(
+  async assembleXudtIssuanceCkbTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string | BtcTxHash,
     btcTxBytes: string,
@@ -63,7 +65,28 @@ export class RgbppClient2 {
     if (btcTxId instanceof BtcTxHash) {
       btcTxId = btcTxId.raw();
     }
-    return this.ckbClient.assembleXudtFinalTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+    return this.ckbClient.assembleXudtIssuanceTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+  }
+
+  async assembleXudtBatchTransferTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string | BtcTxHash,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    sumInputsCapacity: string,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
+    return this.ckbClient.assembleXudtBatchTransferTx(
+      rawTx,
+      btcTxId,
+      btcTxBytes,
+      rgbppApiSpvProof,
+      sumInputsCapacity,
+      ckbFeeRate,
+    );
   }
 
   async xudtIssuanceCkbTx(
@@ -74,6 +97,14 @@ export class RgbppClient2 {
     feeRate?: bigint,
   ): Promise<RgbppXudtIssuanceResult> {
     return this.ckbClient.xudtIssuanceTx(tokenInfo, amount, btcTxId, btcOutIdx, this.getBtcTestnetType(), feeRate);
+  }
+
+  async xudtBatchTransferCkbTx(
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    rgbppReceivers: RgbppBtcAddressReceiver[],
+  ): Promise<BtcBatchTransferVirtualTxResult> {
+    return this.ckbClient.xudtBatchTransferTx(xudtTypeArgs, btcOutpoints, rgbppReceivers, this.getBtcTestnetType());
   }
 
   async buildBtcPsbt(rgbppUtxoProps: RgbppUtxoProps): Promise<bitcoin.Psbt> {

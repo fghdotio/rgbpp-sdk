@@ -4,7 +4,7 @@ import { CkbWaitTransactionConfig, CkbTxHash } from './types';
 import { RgbppTokenInfo, BTCTestnetType } from '../types';
 import { Collector } from '../collector';
 import { RgbppXudtIssuanceResult } from './types';
-import { RgbppLaunchVirtualTxResult } from '../types';
+import { RgbppLaunchVirtualTxResult, RgbppBtcAddressReceiver, BtcBatchTransferVirtualTxResult } from '../types';
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 
 export interface ICkbClient {
@@ -23,11 +23,20 @@ export interface ICkbClient {
     res: ccc.ClientTransactionResponse | undefined;
   }>;
 
-  assembleXudtFinalTx(
+  assembleXudtIssuanceTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction>;
+
+  assembleXudtBatchTransferTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    sumInputsCapacity: string,
+    ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction>;
 
   xudtIssuancePreparationTx(
@@ -45,6 +54,13 @@ export interface ICkbClient {
     btcTestnetType: BTCTestnetType | undefined,
     feeRate?: bigint,
   ): Promise<RgbppXudtIssuanceResult>;
+
+  xudtBatchTransferTx(
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    rgbppReceivers: RgbppBtcAddressReceiver[],
+    btcTestnetType: BTCTestnetType | undefined,
+  ): Promise<BtcBatchTransferVirtualTxResult>;
 }
 
 export interface IRpcClient {
@@ -77,11 +93,22 @@ export interface IXudtTxBuilder {
     btcTestnetType?: BTCTestnetType,
   ): ccc.Transaction;
 
-  assembleXudtFinalTx(
+  assembleXudtIssuanceTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction>;
+
+  assembleXudtBatchTransferTx(
+    ckbRawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    ckbPrivateKey: string,
+    collector: Collector,
+    sumInputsCapacity: string,
+    ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction>;
 
   // partial tx
@@ -91,13 +118,22 @@ export interface IXudtTxBuilder {
     amount: bigint,
     btcTxId: string,
     btcOutIdx: number,
-    isOnMainnet: boolean,
     btcTestnetType: BTCTestnetType,
     feeRate?: bigint,
   ): Promise<RgbppLaunchVirtualTxResult>;
 
+  batchTransferTx(
+    collector: Collector,
+    xudtTypeArgs: string,
+    btcOutpoints: {
+      btcTxId: string;
+      btcOutIdx: number;
+    }[],
+    rgbppReceivers: RgbppBtcAddressReceiver[],
+    btcTestnetType: BTCTestnetType | undefined,
+  ): Promise<BtcBatchTransferVirtualTxResult>;
+
   transferTx(): Promise<void>;
-  batchTransferTx(): Promise<void>;
   leapFromBtcToCkbTx(): Promise<void>;
   leapFromCkbToBtcTx(): Promise<void>;
   btcTimeCellsSpentTx(): Promise<void>;
