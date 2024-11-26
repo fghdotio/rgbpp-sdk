@@ -51,7 +51,7 @@ const issueRgbppAsset = async (args: {
   );
   console.log('RGBPP xUDT unique ID: ', rgbppXudtUniqueId);
   saveCkbVirtualTxResult(rgbppLaunchVirtualTxResult, '2-launch-rgbpp-rft');
-  const { ckbRawTx, commitment, needPaymasterCell } = rgbppLaunchVirtualTxResult;
+  const { ckbRawTx, commitment, needPaymasterCell, btcOutIndex: susBtcOutIndex } = rgbppLaunchVirtualTxResult;
 
   const psbt = await rgbppClient.buildBtcPsbt({
     ckbVirtualTx: ckbRawTx,
@@ -62,24 +62,28 @@ const issueRgbppAsset = async (args: {
   });
   const { txId: susBtcTxId, rawTxHex: btcTxBytes } = await rgbppClient.signAndSendBtcPsbt(psbt);
 
-  console.log('RGB++ xUDT issuance BTC tx id: ', susBtcTxId);
+  console.log(`RGB++ xUDT issuance BTC tx id: ${susBtcTxId}`);
 
   let attempt = 0;
-  let spvProofResponse: string;
   const interval = setInterval(async () => {
     try {
-      console.log(`Waiting for BTC tx and proof to be ready (attempt ${++attempt}): ${spvProofResponse}`);
+      console.log(`Waiting for BTC tx and proof to be ready: attempt ${++attempt}`);
       const rgbppApiSpvProof = await rgbppClient.getRgbppSpvProof(susBtcTxId);
       clearInterval(interval);
 
       const ckbFinalTx = await rgbppClient.assembleXudtFinalCkbTx(ckbRawTx, susBtcTxId, btcTxBytes, rgbppApiSpvProof);
       const txHash = await rgbppClient.sendCkbTransaction(ckbFinalTx);
       console.info(`RGB++ Asset has been issued and CKB tx hash is ${txHash}`);
+
+      console.log(
+        `Execute the following command to distribute the RGB++ asset: (name: ${RGBPP_TOKEN_INFO.name}, symbol: ${RGBPP_TOKEN_INFO.symbol}, decimal: ${RGBPP_TOKEN_INFO.decimal})\n`,
+      );
+      console.log(
+        `RGBPP_XUDT_TRANSFER_BTC_TX_ID=${susBtcTxId.raw()} RGBPP_XUDT_TRANSFER_BTC_OUT_INDEX=${susBtcOutIndex} RGBPP_XUDT_UNIQUE_ID=${rgbppXudtUniqueId} RGBPP_XUDT_TRANSFER_RECEIVERS="<btc_address_1:amount_1;btc_address_2:amount_2;...>" ${btcFeeRate ? `RGBPP_BTC_FEE_RATE=${btcFeeRate}` : ''} npx tsx xudt/launch/3-distribute-rgbpp-rft.ts`,
+      );
     } catch (error) {
       if (!(error instanceof BtcAssetsApiError)) {
         console.error(error);
-      } else {
-        spvProofResponse = error.message;
       }
     }
   }, 30 * 1000);

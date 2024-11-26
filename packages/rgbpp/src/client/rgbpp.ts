@@ -1,8 +1,15 @@
 import { ccc } from '@ckb-ccc/core';
 
-import { ICkbClient, CkbClient2, CkbWaitTransactionConfig, RgbppTokenInfo, CkbTxHash } from '@rgbpp-sdk/ckb';
+import {
+  ICkbClient,
+  CkbClient2,
+  CkbWaitTransactionConfig,
+  RgbppTokenInfo,
+  CkbTxHash,
+  RgbppXudtIssuanceResult,
+} from '@rgbpp-sdk/ckb';
 
-import { IBtcClient, BtcClient2, bitcoin, RgbppUtxoProps } from '@rgbpp-sdk/btc';
+import { IBtcClient, BtcClient2, bitcoin, RgbppUtxoProps, BtcTxHash } from '@rgbpp-sdk/btc';
 
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 
@@ -21,7 +28,7 @@ export class RgbppClient2 {
     return new RgbppClient2(ckbClient, btcClient);
   }
 
-  async sendCkbTransaction(tx: CKBComponents.RawTransaction): Promise<string> {
+  async sendCkbTransaction(tx: CKBComponents.RawTransaction): Promise<CkbTxHash> {
     return this.ckbClient.sendTransaction(tx);
   }
 
@@ -49,10 +56,13 @@ export class RgbppClient2 {
 
   async assembleXudtFinalCkbTx(
     rawTx: CKBComponents.RawTransaction,
-    btcTxId: string,
+    btcTxId: string | BtcTxHash,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
   ): Promise<CKBComponents.RawTransaction> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
     return this.ckbClient.assembleXudtFinalTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
   }
 
@@ -62,7 +72,7 @@ export class RgbppClient2 {
     btcTxId: string,
     btcOutIdx: number,
     feeRate?: bigint,
-  ) {
+  ): Promise<RgbppXudtIssuanceResult> {
     return this.ckbClient.xudtIssuanceTx(tokenInfo, amount, btcTxId, btcOutIdx, this.getBtcTestnetType(), feeRate);
   }
 
@@ -72,7 +82,7 @@ export class RgbppClient2 {
 
   async signAndSendBtcPsbt(psbt: bitcoin.Psbt): Promise<{
     txHex: string;
-    txId: string;
+    txId: BtcTxHash;
     rawTxHex: string;
   }> {
     return this.btcClient.signAndSendPsbt(psbt);
@@ -82,7 +92,7 @@ export class RgbppClient2 {
     return this.btcClient.getBtcAddress();
   }
 
-  getRgbppSpvProof(btcTxId: string, confirmations = 0): Promise<RgbppApiSpvProof> {
+  getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {
     return this.btcClient.getRgbppSpvProof(btcTxId, confirmations);
   }
 }

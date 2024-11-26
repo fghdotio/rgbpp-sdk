@@ -44,7 +44,9 @@ const prepareIssuanceCell = async ({ btcTxId, btcOutIdxStr }: { btcTxId: string;
 
   console.info(`RGB++ issuance cell has been created: ${txHash}`);
 
-  console.log(`Execute the following command to issue the RGB++ xUDT asset:\n`);
+  console.log(
+    `Execute the following command to issue the RGB++ xUDT asset (name: ${RGBPP_TOKEN_INFO.name}, symbol: ${RGBPP_TOKEN_INFO.symbol}, decimal: ${RGBPP_TOKEN_INFO.decimal}):\n`,
+  );
   console.log(
     `RGBPP_XUDT_ISSUANCE_BTC_TX_ID=${btcTxId} RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=${btcOutIdxStr} npx tsx xudt/launch/2-launch-rgbpp-rft.ts`,
   );

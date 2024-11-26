@@ -14,7 +14,7 @@ export interface ICkbClient {
 
   isOnMainnet(): boolean;
 
-  sendTransaction(tx: CKBComponents.RawTransaction): Promise<string>;
+  sendTransaction(tx: CKBComponents.RawTransaction): Promise<CkbTxHash>;
   signAndSendTransaction(
     tx: ccc.TransactionLike,
     config?: CkbWaitTransactionConfig,

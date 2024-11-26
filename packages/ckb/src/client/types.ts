@@ -16,12 +16,12 @@ export class CkbTxHash {
     return this.txHash;
   }
 
-  explorerUrl(): string | undefined {
-    return this.explorerBaseUrl ? `${this.explorerBaseUrl}/transaction/${this.txHash}` : undefined;
+  explorerUrl(): string {
+    return `${this.explorerBaseUrl}/transaction/${this.txHash}`;
   }
 
   toString(): string {
-    return this.explorerUrl() ?? this.txHash;
+    return this.explorerUrl();
   }
 }
 

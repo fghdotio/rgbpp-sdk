@@ -29,6 +29,7 @@ import {
   UNLOCKABLE_LOCK_SCRIPT,
 } from '../constants';
 import { getTransactionSize, scriptToHash } from '@nervosnetwork/ckb-sdk-utils';
+import { MAGIC_NUMBER_RGBPP_ISSUANCE_BTC_OUT_INDEX } from '../client/constants';
 
 import { ccc } from '@ckb-ccc/core';
 
@@ -178,7 +179,7 @@ export const genRgbppLaunchCkbVirtualTx = async ({
   let rgbppCellCapacity = sumInputsCapacity - infoCellCapacity;
   const outputs: CKBComponents.CellOutput[] = [
     {
-      lock: genRgbppLockScript(buildPreLockArgs(1), isMainnet, btcTestnetType),
+      lock: genRgbppLockScript(buildPreLockArgs(MAGIC_NUMBER_RGBPP_ISSUANCE_BTC_OUT_INDEX), isMainnet, btcTestnetType),
       type: {
         ...getXudtTypeScript(isMainnet),
         args: append0x(scriptToHash(ownerLock)),
@@ -226,5 +227,6 @@ export const genRgbppLaunchCkbVirtualTx = async ({
     ckbRawTx,
     commitment,
     needPaymasterCell: false,
+    btcOutIndex: MAGIC_NUMBER_RGBPP_ISSUANCE_BTC_OUT_INDEX,
   };
 };

@@ -11,3 +11,22 @@ export type BtcAccountConfig = {
   addressType: string;
   networkType: string;
 };
+
+export class BtcTxHash {
+  constructor(
+    private readonly txHash: string,
+    private readonly explorerBaseUrl: string,
+  ) {}
+
+  raw() {
+    return this.txHash;
+  }
+
+  explorerUrl(): string {
+    return `${this.explorerBaseUrl}/tx/${this.txHash}`;
+  }
+
+  toString(): string {
+    return this.explorerUrl();
+  }
+}

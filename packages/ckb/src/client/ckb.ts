@@ -19,7 +19,7 @@ export class CkbClient2 implements ICkbClient {
     private readonly signer: ISigner,
     private readonly xudtTxBuilder: IXudtTxBuilder,
     private readonly sporePartialTxBuilder: ISporePartialTxBuilder,
-    private explorerUrl: string,
+    private explorerBaseUrl: string,
 
     private collector: Collector,
   ) {}
@@ -32,7 +32,7 @@ export class CkbClient2 implements ICkbClient {
     const signer = new CkbSigner(new ccc.SignerCkbPrivateKey(rpcClient, ckbPrivateKey));
     const xudtTxBuilder = new XudtCkbTxBuilder(isOnMainnet);
     const sporePartialTxBuilder = new SporePartialCkbTxBuilder(rpcClient);
-    const explorerUrl = isOnMainnet ? 'https://explorer.nervos.org/' : 'https://testnet.explorer.nervos.org/';
+    const explorerBaseUrl = isOnMainnet ? 'https://explorer.nervos.org' : 'https://testnet.explorer.nervos.org';
 
     let jsonRpcUrl: string;
     if (ckbJsonRpcUrl) {
@@ -50,7 +50,7 @@ export class CkbClient2 implements ICkbClient {
       signer,
       xudtTxBuilder,
       sporePartialTxBuilder,
-      explorerUrl,
+      explorerBaseUrl,
       collector,
     );
   }
@@ -79,8 +79,9 @@ export class CkbClient2 implements ICkbClient {
     return this.collector;
   }
 
-  async sendTransaction(tx: CKBComponents.RawTransaction): Promise<string> {
-    return await sendCkbTx({ collector: this.collector, signedTx: tx });
+  async sendTransaction(tx: CKBComponents.RawTransaction): Promise<CkbTxHash> {
+    const txHash = await sendCkbTx({ collector: this.collector, signedTx: tx });
+    return new CkbTxHash(txHash, this.explorerBaseUrl);
   }
 
   async signAndSendTransaction(
@@ -92,7 +93,7 @@ export class CkbClient2 implements ICkbClient {
   }> {
     const { txHash, res } = await this.signer.signAndSendTransaction(tx, config);
     return {
-      txHash: new CkbTxHash(txHash.toString(), this.explorerUrl!),
+      txHash: new CkbTxHash(txHash.toString(), this.explorerBaseUrl),
       res,
     };
   }

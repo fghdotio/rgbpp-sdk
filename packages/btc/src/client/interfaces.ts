@@ -4,6 +4,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 
 import { SendRgbppUtxosProps } from '../api/sendRgbppUtxos';
+import { BtcTxHash } from './types';
 
 export interface IBtcClient {
   getTestnetType(): BTCTestnetType | undefined;
@@ -14,11 +15,11 @@ export interface IBtcClient {
 
   signAndSendPsbt(psbt: bitcoin.Psbt): Promise<{
     txHex: string;
-    txId: string;
+    txId: BtcTxHash;
     rawTxHex: string;
   }>;
 
-  getRgbppSpvProof(btcTxId: string, confirmations: number): Promise<RgbppApiSpvProof>;
+  getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations: number): Promise<RgbppApiSpvProof>;
 }
 
 export interface RgbppUtxoProps extends Omit<SendRgbppUtxosProps, 'source' | 'ckbCollector' | 'from'> {}

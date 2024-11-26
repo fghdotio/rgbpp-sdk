@@ -1,7 +1,7 @@
 import { IBtcClient, RgbppUtxoProps } from './interfaces';
 import { BtcAssetsApi } from '@rgbpp-sdk/service';
 
-import { BtcNetwork, BtcAssetsApiConfig, BtcAccountConfig } from './types';
+import { BtcNetwork, BtcAssetsApiConfig, BtcAccountConfig, BtcTxHash } from './types';
 import { BtcAccount, createBtcAccount, signPsbt } from '../account';
 import { sendRgbppUtxos } from '../api/sendRgbppUtxos';
 import { DataSource } from '../query/source';
@@ -21,6 +21,7 @@ export class BtcClient2 implements IBtcClient {
     private network: BtcNetwork,
     private btcAccount: BtcAccount,
     private dataSource: DataSource,
+    private explorerBaseUrl: string,
   ) {}
 
   static create(
@@ -40,8 +41,13 @@ export class BtcClient2 implements IBtcClient {
     );
     const networkType = btcAccountConfig.networkType === 'Mainnet' ? NetworkType.MAINNET : NetworkType.TESTNET;
     const btcDataSource = new DataSource(assetsApi, networkType);
+    const explorerBaseUrls: Record<BtcNetwork, string> = {
+      Mainnet: 'https://mempool.space',
+      Testnet3: 'https://mempool.space/testnet',
+      Signet: 'https://mempool.space/signet',
+    };
 
-    return new BtcClient2(network, btcAccount, btcDataSource);
+    return new BtcClient2(network, btcAccount, btcDataSource, explorerBaseUrls[network]);
   }
 
   getTestnetType(): BTCTestnetType | undefined {
@@ -68,7 +74,7 @@ export class BtcClient2 implements IBtcClient {
 
   async signAndSendPsbt(psbt: bitcoin.Psbt): Promise<{
     txHex: string;
-    txId: string;
+    txId: BtcTxHash;
     rawTxHex: string;
   }> {
     signPsbt(psbt, this.btcAccount);
@@ -81,13 +87,16 @@ export class BtcClient2 implements IBtcClient {
 
     return {
       txHex,
-      txId: txid,
+      txId: new BtcTxHash(txid, this.explorerBaseUrl),
       // Exclude witness from the BTC_TX for unlocking RGBPP assets
       rawTxHex: transactionToHex(tx, false),
     };
   }
 
-  getRgbppSpvProof(btcTxId: string, confirmations = 0): Promise<RgbppApiSpvProof> {
+  getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
     return this.dataSource.service.getRgbppSpvProof(btcTxId, confirmations);
   }
 }
