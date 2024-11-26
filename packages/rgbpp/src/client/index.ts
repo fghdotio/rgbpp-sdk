@@ -3,7 +3,7 @@ import {
   CkbClient,
   RgbppTokenInfo,
   calculateRgbppTokenInfoCellCapacity,
-  MAGIC_NUMBER_LAUNCH_RGBPP_BTC_OUT_INDEX,
+  MAGIC_NUMBER_RGBPP_ISSUANCE_BTC_OUT_INDEX,
   u128ToLe,
   genBtcTimeLockScript,
   UNLOCKABLE_LOCK_SCRIPT,
@@ -104,7 +104,7 @@ export class RgbppClient {
 
     const infoCellCapacity = this.calculateRgbppTokenInfoCellCapacity(tokenInfo);
     tx.addOutput({
-      lock: this.ckbClient.generateRgbppLockScript(MAGIC_NUMBER_LAUNCH_RGBPP_BTC_OUT_INDEX),
+      lock: this.ckbClient.generateRgbppLockScript(MAGIC_NUMBER_RGBPP_ISSUANCE_BTC_OUT_INDEX),
       type: {
         ...this.ckbClient.getScriptInfo('XUDTType'),
         args: assetOwnerLockScript.hash(),

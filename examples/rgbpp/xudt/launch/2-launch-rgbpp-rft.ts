@@ -3,23 +3,13 @@ import { RgbppClient2 } from 'rgbpp';
 
 import { BtcAssetsApiError } from 'rgbpp';
 
-import {
-  appendCkbTxWitnessesCCC,
-  updateCkbTxWithRealBtcTxIdCCC,
-  ckbNetwork,
-  MAGIC_NUMBER_RGBPP_ISSUANCE_BTC_OUT_INDEX,
-} from 'rgbpp/ckb';
+import { ckbNetwork } from 'rgbpp/ckb';
 
 import { saveCkbVirtualTxResult } from '../../shared/utils';
 
-import { buildRgbppUtxos } from 'rgbpp/btc';
 import { RGBPP_TOKEN_INFO } from './0-rgbpp-token-info';
 import {
   BTC_TESTNET_TYPE,
-  btcAccount,
-  btcDataSource,
-  btcService,
-  isMainnet,
   CKB_PRIVATE_KEY,
   ckbAddress,
   BTC_SERVICE_URL,
@@ -28,8 +18,6 @@ import {
   BTC_PRIVATE_KEY,
   BTC_ADDRESS_TYPE,
 } from '../../env';
-import { signAndSendPsbt } from '../../shared/btc-account';
-import { parse } from 'dotenv';
 
 const issueRgbppAsset = async (args: {
   btcTxId: string;
@@ -37,7 +25,7 @@ const issueRgbppAsset = async (args: {
   issuanceAmountStr?: string;
   btcFeeRateStr?: string;
 }) => {
-  const { btcTxId, btcOutIndex, launchAmount, btcFeeRate } = parseArgs(args);
+  const { btcTxId, btcOutIndex, issuanceAmount, btcFeeRate } = parseArgs(args);
 
   const rgbppClient = RgbppClient2.create({
     ckbNetwork: ckbNetwork(ckbAddress),
@@ -57,15 +45,44 @@ const issueRgbppAsset = async (args: {
 
   const { rgbppLaunchVirtualTxResult, rgbppXudtUniqueId } = await rgbppClient.xudtIssuanceCkbTx(
     RGBPP_TOKEN_INFO,
-    launchAmount,
+    issuanceAmount,
     btcTxId,
     btcOutIndex,
-    btcFeeRate,
   );
-  console.log('RGBPP XUDT Unique ID: ', rgbppXudtUniqueId);
-  console.log('RGBPP Launch Virtual Tx Result: ', rgbppLaunchVirtualTxResult);
+  console.log('RGBPP xUDT unique ID: ', rgbppXudtUniqueId);
+  saveCkbVirtualTxResult(rgbppLaunchVirtualTxResult, '2-launch-rgbpp-rft');
+  const { ckbRawTx, commitment, needPaymasterCell } = rgbppLaunchVirtualTxResult;
 
-  saveCkbVirtualTxResult(rgbppLaunchVirtualTxResult, '2-launch-rgbpp');
+  const psbt = await rgbppClient.buildBtcPsbt({
+    ckbVirtualTx: ckbRawTx,
+    commitment,
+    tos: [rgbppClient.getBtcAddress()],
+    needPaymaster: needPaymasterCell,
+    feeRate: btcFeeRate,
+  });
+  const { txId: susBtcTxId, rawTxHex: btcTxBytes } = await rgbppClient.signAndSendBtcPsbt(psbt);
+
+  console.log('RGB++ xUDT issuance BTC tx id: ', susBtcTxId);
+
+  let attempt = 0;
+  let spvProofResponse: string;
+  const interval = setInterval(async () => {
+    try {
+      console.log(`Waiting for BTC tx and proof to be ready (attempt ${++attempt}): ${spvProofResponse}`);
+      const rgbppApiSpvProof = await rgbppClient.getRgbppSpvProof(susBtcTxId);
+      clearInterval(interval);
+
+      const ckbFinalTx = await rgbppClient.assembleXudtFinalCkbTx(ckbRawTx, susBtcTxId, btcTxBytes, rgbppApiSpvProof);
+      const txHash = await rgbppClient.sendCkbTransaction(ckbFinalTx);
+      console.info(`RGB++ Asset has been issued and CKB tx hash is ${txHash}`);
+    } catch (error) {
+      if (!(error instanceof BtcAssetsApiError)) {
+        console.error(error);
+      } else {
+        spvProofResponse = error.message;
+      }
+    }
+  }, 30 * 1000);
 };
 
 const parseArgs = ({
@@ -83,25 +100,25 @@ const parseArgs = ({
   if (isNaN(btcOutIndex)) {
     throw new Error('RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX is not a number');
   }
-  let launchAmount: bigint;
+  let issuanceAmount: bigint;
   if (issuanceAmountStr) {
     try {
-      launchAmount = BigInt(issuanceAmountStr) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
+      issuanceAmount = BigInt(issuanceAmountStr) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
     } catch (error) {
       throw new Error('RGBPP_XUDT_ISSUANCE_AMOUNT is not a number');
     }
   } else {
-    launchAmount = BigInt(2100_0000) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
+    issuanceAmount = BigInt(2100_0000) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
   }
   if (btcFeeRateStr) {
     try {
-      const btcFeeRate = BigInt(parseInt(btcFeeRateStr));
-      return { btcTxId, btcOutIndex, launchAmount, btcFeeRate };
+      const btcFeeRate = parseInt(btcFeeRateStr);
+      return { btcTxId, btcOutIndex, issuanceAmount, btcFeeRate };
     } catch (error) {
       throw new Error('RGBPP_BTC_FEE_RATE is not a number');
     }
   } else {
-    return { btcTxId, btcOutIndex, launchAmount };
+    return { btcTxId, btcOutIndex, issuanceAmount };
   }
 };
 
@@ -114,10 +131,10 @@ issueRgbppAsset({
 
 /* 
 Usage:
-RGBPP_XUDT_ISSUANCE_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=<btc_out_index> [RGBPP_XUDT_ISSUANCE_AMOUNT=<launch_amount>] [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/2-launch-rgbpp-ccc.ts
+RGBPP_XUDT_ISSUANCE_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=<btc_out_index> [RGBPP_XUDT_ISSUANCE_AMOUNT=<launch_amount>] [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/2-launch-rgbpp-rft.ts
 
 Example:
-RGBPP_XUDT_ISSUANCE_BTC_TX_ID=abc123... RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=0 npx tsx xudt/launch/2-launch-rgbpp-ccc.ts
+RGBPP_XUDT_ISSUANCE_BTC_TX_ID=abc123... RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=0 npx tsx xudt/launch/2-launch-rgbpp-rft.ts
 
 Note:
 - RGBPP_XUDT_ISSUANCE_AMOUNT is optional, defaults to 2100_0000. The value should be the raw amount without decimals 

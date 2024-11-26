@@ -10,7 +10,8 @@ import { CkbSigner } from './signer';
 import { CkbTxHash } from './types';
 import { Collector } from '../collector';
 import { RgbppXudtIssuanceResult } from './types';
-
+import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+import { sendCkbTx } from '../rgbpp';
 export class CkbClient2 implements ICkbClient {
   constructor(
     private readonly network: CkbNetwork,
@@ -74,6 +75,14 @@ export class CkbClient2 implements ICkbClient {
     return this.network === 'mainnet';
   }
 
+  getCollector() {
+    return this.collector;
+  }
+
+  async sendTransaction(tx: CKBComponents.RawTransaction): Promise<string> {
+    return await sendCkbTx({ collector: this.collector, signedTx: tx });
+  }
+
   async signAndSendTransaction(
     tx: ccc.TransactionLike,
     config?: CkbWaitTransactionConfig,
@@ -115,6 +124,15 @@ export class CkbClient2 implements ICkbClient {
     await tx.completeFeeBy(this.getSigner());
 
     return tx;
+  }
+
+  async assembleXudtFinalTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ) {
+    return this.xudtTxBuilder.assembleXudtFinalTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
   }
 
   async xudtIssuanceTx(

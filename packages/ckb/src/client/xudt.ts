@@ -6,9 +6,12 @@ import { calculateRgbppCellCapacity, calculateRgbppTokenInfoCellCapacity } from 
 import { buildRgbppLockArgs, buildPreLockArgs } from '../utils/rgbpp';
 import { BTCTestnetType } from '../types';
 import { getRgbppLockScript } from '../constants';
-import { genRgbppLaunchCkbVirtualTx } from '../rgbpp';
+import { genRgbppLaunchCkbVirtualTx, updateCkbTxWithRealBtcTxId } from '../rgbpp';
 import { Collector } from '../collector';
 import { RgbppLaunchVirtualTxResult } from '../types';
+import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+import { appendCkbTxWitnesses } from '../rgbpp';
+
 export class XudtCkbTxBuilder implements IXudtTxBuilder {
   constructor(private isOnMainnet: boolean) {}
 
@@ -47,6 +50,20 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
       ],
     });
     return tx;
+  }
+
+  async assembleXudtFinalTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction> {
+    const updatedRawTx = updateCkbTxWithRealBtcTxId({ ckbRawTx: rawTx, btcTxId, isMainnet: this.isOnMainnet });
+    return await appendCkbTxWitnesses({
+      ckbRawTx: updatedRawTx,
+      btcTxBytes,
+      rgbppApiSpvProof,
+    });
   }
 
   async issuanceTx(

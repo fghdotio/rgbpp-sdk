@@ -5,12 +5,16 @@ import { RgbppTokenInfo, BTCTestnetType } from '../types';
 import { Collector } from '../collector';
 import { RgbppXudtIssuanceResult } from './types';
 import { RgbppLaunchVirtualTxResult } from '../types';
+import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 
 export interface ICkbClient {
+  getCollector(): Collector;
+
   generateRgbppLockScript(outIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType): ccc.Script;
 
   isOnMainnet(): boolean;
 
+  sendTransaction(tx: CKBComponents.RawTransaction): Promise<string>;
   signAndSendTransaction(
     tx: ccc.TransactionLike,
     config?: CkbWaitTransactionConfig,
@@ -18,6 +22,13 @@ export interface ICkbClient {
     txHash: CkbTxHash | string;
     res: ccc.ClientTransactionResponse | undefined;
   }>;
+
+  assembleXudtFinalTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction>;
 
   xudtIssuancePreparationTx(
     tokenInfo: RgbppTokenInfo,
@@ -65,6 +76,13 @@ export interface IXudtTxBuilder {
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
   ): ccc.Transaction;
+
+  assembleXudtFinalTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction>;
 
   // partial tx
   issuanceTx(
