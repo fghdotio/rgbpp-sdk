@@ -1,12 +1,9 @@
-import { RgbppClient2 } from 'rgbpp';
-
-import { BtcAssetsApiError } from 'rgbpp';
-
+import { RgbppClient2, BtcAssetsApiError } from 'rgbpp';
 import { ckbNetwork } from 'rgbpp/ckb';
 
-import { saveCkbVirtualTxResult } from '../../shared/utils';
-
 import { RGBPP_TOKEN_INFO } from './0-rgbpp-token-info';
+
+import { saveCkbVirtualTxResult } from '../../shared/utils';
 import {
   BTC_TESTNET_TYPE,
   CKB_PRIVATE_KEY,
@@ -19,12 +16,13 @@ import {
 } from '../../env';
 
 const distributeRgbppXudtOnBtc = async (args: {
-  btcOutpoints: string;
+  btcTxId: string;
+  btcOutIndexStr: string;
   rgbppXudtUniqueId: string;
   receivers: string;
   btcFeeRateStr?: string;
 }) => {
-  const { btcOutpointList, rgbppXudtUniqueId, rgbppXudtReceivers, btcFeeRate } = parseArgs(args);
+  const { btcTxId, btcOutIndex, rgbppXudtUniqueId, rgbppXudtReceivers, btcFeeRate } = parseArgs(args);
 
   const rgbppClient = RgbppClient2.create({
     ckbNetwork: ckbNetwork(ckbAddress),
@@ -44,7 +42,7 @@ const distributeRgbppXudtOnBtc = async (args: {
 
   const batchTransferVirtualTx = await rgbppClient.xudtBatchTransferCkbTx(
     rgbppXudtUniqueId,
-    btcOutpointList,
+    [{ btcTxId, btcOutIdx: btcOutIndex }],
     rgbppXudtReceivers,
   );
 
@@ -62,7 +60,7 @@ const distributeRgbppXudtOnBtc = async (args: {
   });
   const { txId: susBtcTxId, rawTxHex: btcTxBytes } = await rgbppClient.signAndSendBtcPsbt(psbt);
 
-  console.log(`RGB++ xUDT batch transfer BTC tx id: ${susBtcTxId}`);
+  console.log(`RGB++ xUDT distribution BTC tx: ${susBtcTxId}`);
 
   let attempt = 0;
   const interval = setInterval(async () => {
@@ -92,28 +90,22 @@ const distributeRgbppXudtOnBtc = async (args: {
 };
 
 const parseArgs = ({
-  btcOutpoints,
+  btcTxId,
+  btcOutIndexStr,
   rgbppXudtUniqueId,
   receivers,
   btcFeeRateStr,
 }: {
-  btcOutpoints: string;
+  btcTxId: string;
+  btcOutIndexStr: string;
   rgbppXudtUniqueId: string;
   receivers: string;
   btcFeeRateStr?: string;
 }) => {
-  const btcOutpointList = btcOutpoints.split(';').map((outpoint) => {
-    const [btcTxId, btcOutIndexStr] = outpoint.split(':');
-    if (!btcTxId || !btcOutIndexStr) {
-      throw new Error('Invalid btc outpoint format');
-    }
-    try {
-      const btcOutIndex = parseInt(btcOutIndexStr);
-      return { btcTxId, btcOutIdx: btcOutIndex };
-    } catch (error) {
-      throw new Error('index in BTC outpoint is not a number');
-    }
-  });
+  const btcOutIndex = parseInt(btcOutIndexStr);
+  if (isNaN(btcOutIndex)) {
+    throw new Error('RGBPP_XUDT_BTC_OUT_INDEX is not a number');
+  }
   const rgbppXudtReceivers = receivers.split(';').map((receiver) => {
     const [btcAddress, amountStr] = receiver.split(':');
     if (!btcAddress || !amountStr) {
@@ -131,28 +123,31 @@ const parseArgs = ({
   if (btcFeeRateStr) {
     try {
       const btcFeeRate = parseInt(btcFeeRateStr);
-      return { btcOutpointList, rgbppXudtUniqueId, rgbppXudtReceivers, btcFeeRate };
+      return { btcTxId, btcOutIndex, rgbppXudtUniqueId, rgbppXudtReceivers, btcFeeRate };
     } catch (error) {
       throw new Error('RGBPP_BTC_FEE_RATE is not a number');
     }
   } else {
-    return { btcOutpointList, rgbppXudtUniqueId, rgbppXudtReceivers };
+    return { btcTxId, btcOutIndex, rgbppXudtUniqueId, rgbppXudtReceivers };
   }
 };
 
 distributeRgbppXudtOnBtc({
   // Warning: If rgbpp assets are distributed continuously, then the position of the current rgbpp asset utxo depends on the position of the previous change utxo distributed
-  btcOutpoints: process.env.RGBPP_XUDT_BTC_OUT_POINTS!,
+  btcTxId: process.env.RGBPP_XUDT_BTC_TX_ID!,
+  btcOutIndexStr: process.env.RGBPP_XUDT_BTC_OUT_INDEX!,
   rgbppXudtUniqueId: process.env.RGBPP_XUDT_UNIQUE_ID!,
-  receivers: process.env.RGBPP_XUDT_TRANSFER_RECEIVERS!,
+  receivers: process.env.RGBPP_XUDT_RECEIVERS!,
   btcFeeRateStr: process.env.RGBPP_BTC_FEE_RATE,
 });
 
 /* 
 Usage:
-RGBPP_XUDT_BTC_OUT_POINTS=<btc_tx_id_1:btc_out_index_1;btc_tx_id_2:btc_out_index_2;...> RGBPP_XUDT_UNIQUE_ID=<xudt_type_args> RGBPP_XUDT_TRANSFER_RECEIVERS=<btc_address_1:amount_1;btc_address_2:amount_2;...> [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/3-distribute-rgbpp-rft.ts
+RGBPP_XUDT_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_BTC_OUT_INDEX=<btc_out_index> RGBPP_XUDT_UNIQUE_ID=<rgbpp_xudt_unique_id> RGBPP_XUDT_RECEIVERS=<btc_address_1:amount_1;btc_address_2:amount_2;...> [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/3-distribute-rgbpp.ts
+
+Example:
+RGBPP_XUDT_BTC_TX_ID=abc123... RGBPP_XUDT_BTC_OUT_INDEX=0 RGBPP_XUDT_UNIQUE_ID=0x12fa123b8a4516ec31ea2871da29a66f4d6d8fbb9e1693f15ad416c1e89eb237 RGBPP_XUDT_RECEIVERS=tb1qeq...nm85:1000;tb1qeq...nm86:2000 npx tsx xudt/launch/3-distribute-rgbpp-rft.ts 
 
 Note:
 - RGBPP_BTC_FEE_RATE is optional, uses default network fee rate if not specified
-- Transfer amount should be the raw amount without decimals (e.g., use 100_0000 for 1M tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
 */

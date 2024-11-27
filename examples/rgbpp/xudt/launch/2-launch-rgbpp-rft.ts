@@ -1,12 +1,9 @@
-import { RgbppClient2 } from 'rgbpp';
-
-import { BtcAssetsApiError } from 'rgbpp';
-
+import { RgbppClient2, BtcAssetsApiError } from 'rgbpp';
 import { ckbNetwork } from 'rgbpp/ckb';
 
-import { saveCkbVirtualTxResult } from '../../shared/utils';
-
 import { RGBPP_TOKEN_INFO } from './0-rgbpp-token-info';
+
+import { saveCkbVirtualTxResult } from '../../shared/utils';
 import {
   BTC_TESTNET_TYPE,
   CKB_PRIVATE_KEY,
@@ -61,7 +58,7 @@ const issueRgbppAsset = async (args: {
   });
   const { txId: susBtcTxId, rawTxHex: btcTxBytes } = await rgbppClient.signAndSendBtcPsbt(psbt);
 
-  console.log(`RGB++ xUDT issuance BTC tx id: ${susBtcTxId}`);
+  console.log(`RGB++ xUDT issuance BTC tx: ${susBtcTxId}`);
 
   let attempt = 0;
   const interval = setInterval(async () => {
@@ -83,7 +80,7 @@ const issueRgbppAsset = async (args: {
 
       console.log(`Execute the following command to distribute this RGB++ xUDT token:\n`);
       console.log(
-        `RGBPP_XUDT_TRANSFER_BTC_TX_ID=${susBtcTxId.raw()} RGBPP_XUDT_TRANSFER_BTC_OUT_INDEX=${susBtcOutIndex} RGBPP_XUDT_UNIQUE_ID=${rgbppXudtUniqueId} RGBPP_XUDT_TRANSFER_RECEIVERS="<btc_address_1:amount_1;btc_address_2:amount_2;...>" ${btcFeeRate ? `RGBPP_BTC_FEE_RATE=${btcFeeRate}` : ''} npx tsx xudt/launch/3-distribute-rgbpp-rft.ts`,
+        `RGBPP_XUDT_BTC_TX_ID=${susBtcTxId.raw()} RGBPP_XUDT_BTC_OUT_INDEX=${susBtcOutIndex} RGBPP_XUDT_UNIQUE_ID=${rgbppXudtUniqueId} RGBPP_XUDT_RECEIVERS="<btc_address_1:amount_1;btc_address_2:amount_2;...>" ${btcFeeRate ? `RGBPP_BTC_FEE_RATE=${btcFeeRate}` : ''} npx tsx xudt/launch/3-distribute-rgbpp-rft.ts`,
       );
     } catch (error) {
       if (!(error instanceof BtcAssetsApiError)) {

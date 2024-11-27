@@ -1,6 +1,6 @@
 import { RgbppClient2 } from 'rgbpp';
-
 import { ckbNetwork } from 'rgbpp/ckb';
+
 import { RGBPP_TOKEN_INFO } from './0-rgbpp-token-info';
 
 import {
