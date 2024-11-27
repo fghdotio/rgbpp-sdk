@@ -24,6 +24,7 @@ import {
   RgbppBtcAddressReceiver,
   BtcBatchTransferVirtualTxResult,
   BtcTransferVirtualTxResult,
+  BtcJumpCkbVirtualTxResult,
 } from '../types';
 
 export class CkbClient2 implements ICkbClient {
@@ -273,6 +274,31 @@ export class CkbClient2 implements ICkbClient {
       leapAmount,
       btcTestnetType,
       ckbFeeRate,
+      witnessLockPlaceholderSize,
+    );
+  }
+
+  async xudtLeapFromBtcToCkbTx(
+    xudtTypeArgs: string,
+    toCkbAddress: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    leapAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    btcConfirmationBlocks?: number,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcJumpCkbVirtualTxResult> {
+    return this.xudtTxBuilder.leapFromBtcToCkbTx(
+      this.collector,
+      xudtTypeArgs,
+      toCkbAddress,
+      btcOutpoints,
+      leapAmount,
+      btcTestnetType,
+      ckbFeeRate,
+      btcConfirmationBlocks,
+      noMergeOutputCells,
       witnessLockPlaceholderSize,
     );
   }

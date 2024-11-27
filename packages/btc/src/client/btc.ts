@@ -6,6 +6,7 @@ import {
   BtcAssetsApi,
   RgbppApiTransactionStateParams,
   RgbppApiCkbTransactionHash,
+  RgbppApiSendCkbVirtualResult,
 } from '@rgbpp-sdk/service';
 import { Collector, BTCTestnetType } from '@rgbpp-sdk/ckb';
 
@@ -93,6 +94,16 @@ export class BtcClient2 implements IBtcClient {
       // Exclude witness from the BTC_TX for unlocking RGBPP assets
       rawTxHex: transactionToHex(tx, false),
     };
+  }
+
+  async sendRgbppCkbTransaction(
+    btcTxId: string | BtcTxHash,
+    ckbVirtualResult: string | RgbppApiSendCkbVirtualResult,
+  ): Promise<RgbppApiTransactionState> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
+    return this.dataSource.service.sendRgbppCkbTransaction({ btc_txid: btcTxId, ckb_virtual_result: ckbVirtualResult });
   }
 
   async getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {

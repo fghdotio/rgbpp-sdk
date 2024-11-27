@@ -106,14 +106,14 @@ const parseArgs = ({
 }) => {
   const btcOutIndex = parseInt(btcOutIndexStr);
   if (isNaN(btcOutIndex)) {
-    throw new Error('RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX is not a number');
+    throw new Error('RGBPP_XUDT_BTC_OUT_INDEX is not a number');
   }
   let issuanceAmount: bigint;
   if (issuanceAmountStr) {
     try {
       issuanceAmount = BigInt(issuanceAmountStr) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
     } catch (error) {
-      throw new Error('RGBPP_XUDT_ISSUANCE_AMOUNT is not a number');
+      throw new Error('RGBPP_XUDT_AMOUNT is not a number');
     }
   } else {
     issuanceAmount = BigInt(2100_0000) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
@@ -131,21 +131,21 @@ const parseArgs = ({
 };
 
 issueRgbppAsset({
-  btcTxId: process.env.RGBPP_XUDT_ISSUANCE_BTC_TX_ID!,
-  btcOutIndexStr: process.env.RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX!,
-  issuanceAmountStr: process.env.RGBPP_XUDT_ISSUANCE_AMOUNT,
+  btcTxId: process.env.RGBPP_XUDT_BTC_TX_ID!,
+  btcOutIndexStr: process.env.RGBPP_XUDT_BTC_OUT_INDEX!,
+  issuanceAmountStr: process.env.RGBPP_XUDT_AMOUNT,
   btcFeeRateStr: process.env.RGBPP_BTC_FEE_RATE,
 });
 
 /* 
 Usage:
-RGBPP_XUDT_ISSUANCE_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=<btc_out_index> [RGBPP_XUDT_ISSUANCE_AMOUNT=<launch_amount>] [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/2-launch-rgbpp-rft.ts
+RGBPP_XUDT_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_BTC_OUT_INDEX=<btc_out_index> [RGBPP_XUDT_AMOUNT=<launch_amount>] [RGBPP_BTC_FEE_RATE=<fee_rate>] npx tsx xudt/launch/2-launch-rgbpp-rft.ts
 
 Example:
-RGBPP_XUDT_ISSUANCE_BTC_TX_ID=abc123... RGBPP_XUDT_ISSUANCE_BTC_OUT_INDEX=0 npx tsx xudt/launch/2-launch-rgbpp-rft.ts
+RGBPP_XUDT_BTC_TX_ID=abc123... RGBPP_XUDT_BTC_OUT_INDEX=0 npx tsx xudt/launch/2-launch-rgbpp-rft.ts
 
 Note:
-- RGBPP_XUDT_ISSUANCE_AMOUNT is optional, defaults to 2100_0000. The value should be the raw amount without decimals 
-  (e.g., use 2100_0000 for 21M tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
+- RGBPP_XUDT_AMOUNT is optional, defaults to 2100_0000. The value should be the raw amount without decimals 
+  (e.g., use 100_0000 for 1M tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
 - RGBPP_BTC_FEE_RATE is optional, uses default network fee rate if not specified
 */

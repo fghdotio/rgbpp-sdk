@@ -2,7 +2,8 @@ import { ccc } from '@ckb-ccc/core';
 
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 
-import { CkbWaitTransactionConfig, CkbTxHash } from './types';
+import { CkbWaitTransactionConfig, CkbTxHash, RgbppXudtIssuanceResult } from './types';
+
 import {
   RgbppTokenInfo,
   BTCTestnetType,
@@ -10,9 +11,9 @@ import {
   RgbppBtcAddressReceiver,
   BtcBatchTransferVirtualTxResult,
   BtcTransferVirtualTxResult,
+  BtcJumpCkbVirtualTxResult,
 } from '../types';
 import { Collector } from '../collector';
-import { RgbppXudtIssuanceResult } from './types';
 
 export interface ICkbClient {
   getCollector(): Collector;
@@ -24,6 +25,7 @@ export interface ICkbClient {
   newCkbTxHash(txHash: string): CkbTxHash;
 
   sendTransaction(tx: CKBComponents.RawTransaction): Promise<CkbTxHash>;
+
   signAndSendTransaction(
     tx: ccc.TransactionLike,
     config?: CkbWaitTransactionConfig,
@@ -66,12 +68,34 @@ export interface ICkbClient {
     feeRate?: bigint,
   ): Promise<RgbppXudtIssuanceResult>;
 
+  xudtTransferTx(
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    transferAmount: bigint,
+    btcTestnetType: BTCTestnetType | undefined,
+    ckbFeeRate?: bigint,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcTransferVirtualTxResult>;
+
   xudtBatchTransferTx(
     xudtTypeArgs: string,
     btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
     rgbppReceivers: RgbppBtcAddressReceiver[],
     btcTestnetType: BTCTestnetType | undefined,
   ): Promise<BtcBatchTransferVirtualTxResult>;
+
+  xudtLeapFromBtcToCkbTx(
+    xudtTypeArgs: string,
+    toCkbAddress: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    leapAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    btcConfirmationBlocks?: number,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcJumpCkbVirtualTxResult>;
 
   xudtLeapFromCkbToBtcTx(
     xudtTypeArgs: string,
@@ -82,16 +106,6 @@ export interface ICkbClient {
     ckbFeeRate?: bigint,
     witnessLockPlaceholderSize?: number,
   ): Promise<CKBComponents.RawTransaction>;
-
-  xudtTransferTx(
-    xudtTypeArgs: string,
-    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
-    transferAmount: bigint,
-    btcTestnetType: BTCTestnetType | undefined,
-    ckbFeeRate?: bigint,
-    noMergeOutputCells?: boolean,
-    witnessLockPlaceholderSize?: number,
-  ): Promise<BtcTransferVirtualTxResult>;
 }
 
 export interface IRpcClient {
@@ -182,8 +196,18 @@ export interface IXudtTxBuilder {
     witnessLockPlaceholderSize?: number,
   ): Promise<BtcTransferVirtualTxResult>;
 
-  leapFromBtcToCkbTx(): Promise<void>;
-  btcTimeCellsSpentTx(): Promise<void>;
+  leapFromBtcToCkbTx(
+    collector: Collector,
+    xudtTypeArgs: string,
+    toCkbAddress: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    leapAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    btcConfirmationBlocks?: number,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcJumpCkbVirtualTxResult>;
 
   leapFromCkbToBtcTx(
     collector: Collector,
@@ -196,6 +220,8 @@ export interface IXudtTxBuilder {
     ckbFeeRate?: bigint,
     witnessLockPlaceholderSize?: number,
   ): Promise<CKBComponents.RawTransaction>;
+
+  btcTimeCellsSpentTx(): Promise<void>;
 }
 
 export interface ISporePartialTxBuilder {

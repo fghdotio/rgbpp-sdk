@@ -7,6 +7,7 @@ import {
   RgbppApiTransactionState,
   RgbppApiTransactionStateParams,
   RgbppApiCkbTransactionHash,
+  RgbppApiSendCkbVirtualResult,
 } from '@rgbpp-sdk/service';
 
 import { BtcTxHash } from './types';
@@ -25,6 +26,11 @@ export interface IBtcClient {
     txId: BtcTxHash;
     rawTxHex: string;
   }>;
+
+  sendRgbppCkbTransaction(
+    btcTxId: string | BtcTxHash,
+    ckbVirtualResult: string | RgbppApiSendCkbVirtualResult,
+  ): Promise<RgbppApiTransactionState>;
 
   getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations: number): Promise<RgbppApiSpvProof>;
 

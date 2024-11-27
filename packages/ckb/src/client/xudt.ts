@@ -10,6 +10,7 @@ import {
   BtcBatchTransferVirtualTxResult,
   RgbppTokenInfo,
   BtcTransferVirtualTxResult,
+  BtcJumpCkbVirtualTxResult,
 } from '../types';
 import {
   calculateRgbppCellCapacity,
@@ -26,6 +27,7 @@ import {
   appendIssuerCellToBtcBatchTransfer,
   genCkbJumpBtcVirtualTx,
   genBtcTransferCkbVirtualTx,
+  genBtcJumpCkbVirtualTx,
 } from '../rgbpp';
 import { Collector } from '../collector';
 
@@ -204,10 +206,6 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     });
   }
 
-  async leapFromBtcToCkbTx() {
-    throw new Error('Not implemented');
-  }
-
   async btcTimeCellsSpentTx() {
     throw new Error('Not implemented');
   }
@@ -234,6 +232,33 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
       witnessLockPlaceholderSize,
       btcTestnetType,
       ckbFeeRate,
+    });
+  }
+
+  async leapFromBtcToCkbTx(
+    collector: Collector,
+    xudtTypeArgs: string,
+    toCkbAddress: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    leapAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    btcConfirmationBlocks?: number,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcJumpCkbVirtualTxResult> {
+    return genBtcJumpCkbVirtualTx({
+      toCkbAddress,
+      collector,
+      xudtTypeBytes: serializeScript(this.generateXudtTypeScript(xudtTypeArgs)),
+      rgbppLockArgsList: btcOutpoints.map(({ btcTxId, btcOutIdx }) => buildRgbppLockArgs(btcOutIdx, btcTxId)),
+      transferAmount: leapAmount,
+      isMainnet: this.isOnMainnet,
+      btcTestnetType,
+      ckbFeeRate,
+      btcConfirmationBlocks,
+      noMergeOutputCells,
+      witnessLockPlaceholderSize,
     });
   }
 }

@@ -10,11 +10,17 @@ import {
   RgbppBtcAddressReceiver,
   BtcBatchTransferVirtualTxResult,
   BtcTransferVirtualTxResult,
+  BtcJumpCkbVirtualTxResult,
 } from '@rgbpp-sdk/ckb';
 
 import { IBtcClient, BtcClient2, bitcoin, RgbppUtxoProps, BtcTxHash } from '@rgbpp-sdk/btc';
 
-import { RgbppApiSpvProof, RgbppApiTransactionState, RgbppApiTransactionStateParams } from '@rgbpp-sdk/service';
+import {
+  RgbppApiSpvProof,
+  RgbppApiTransactionState,
+  RgbppApiTransactionStateParams,
+  RgbppApiSendCkbVirtualResult,
+} from '@rgbpp-sdk/service';
 
 import { RgbppClientConfig } from './types';
 
@@ -152,6 +158,29 @@ export class RgbppClient2 {
     );
   }
 
+  async xudtLeapFromBtcToCkbCkbTx(
+    xudtTypeArgs: string,
+    toCkbAddress: string,
+    leapAmount: bigint,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    ckbFeeRate?: bigint,
+    btcConfirmationBlocks?: number,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcJumpCkbVirtualTxResult> {
+    return this.ckbClient.xudtLeapFromBtcToCkbTx(
+      xudtTypeArgs,
+      toCkbAddress,
+      btcOutpoints,
+      leapAmount,
+      this.getBtcTestnetType(),
+      ckbFeeRate,
+      btcConfirmationBlocks,
+      noMergeOutputCells,
+      witnessLockPlaceholderSize,
+    );
+  }
+
   async buildBtcPsbt(rgbppUtxoProps: RgbppUtxoProps): Promise<bitcoin.Psbt> {
     return this.btcClient.buildPsbt(rgbppUtxoProps, this.ckbClient.getCollector());
   }
@@ -166,6 +195,13 @@ export class RgbppClient2 {
 
   getBtcAddress(): string {
     return this.btcClient.getBtcAddress();
+  }
+
+  async sendRgbppCkbTransaction(
+    btcTxId: string | BtcTxHash,
+    ckbVirtualResult: string | RgbppApiSendCkbVirtualResult,
+  ): Promise<RgbppApiTransactionState> {
+    return this.btcClient.sendRgbppCkbTransaction(btcTxId, ckbVirtualResult);
   }
 
   async getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {

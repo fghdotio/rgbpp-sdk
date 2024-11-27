@@ -14,14 +14,14 @@ import {
   BTC_ADDRESS_TYPE,
 } from '../env';
 
-const transferRgbppXudt = async (args: {
+const leapXudtFromBtcToCKB = async (args: {
   btcOutpoints: string;
-  receiverBtcAddress: string;
+  toCkbAddress: string;
   rgbppXudtUniqueId: string;
-  transferAmountStr: string;
+  leapAmountStr: string;
   btcFeeRateStr?: string;
 }) => {
-  const { btcOutpointList, rgbppXudtUniqueId, amount, receiverBtcAddress, btcFeeRate } = parseArgs(args);
+  const { btcOutpointList, toCkbAddress, rgbppXudtUniqueId, leapAmount, btcFeeRate } = parseArgs(args);
 
   const rgbppClient = RgbppClient2.create({
     ckbNetwork: ckbNetwork(ckbAddress),
@@ -39,20 +39,27 @@ const transferRgbppXudt = async (args: {
     },
   });
 
-  const transferVirtualTx = await rgbppClient.xudtTransferCkbTx(rgbppXudtUniqueId, btcOutpointList, amount);
-  saveCkbVirtualTxResult(transferVirtualTx, '2-btc-transfer-rfc');
+  const leapCkbVirtualTxResult = await rgbppClient.xudtLeapFromBtcToCkbCkbTx(
+    rgbppXudtUniqueId,
+    toCkbAddress,
+    leapAmount,
+    btcOutpointList,
+  );
+  saveCkbVirtualTxResult(leapCkbVirtualTxResult, '3-btc-leap-ckb-rfc');
 
-  const { ckbRawTx, commitment, needPaymasterCell } = transferVirtualTx;
+  const { ckbRawTx, commitment } = leapCkbVirtualTxResult;
+
   const psbt = await rgbppClient.buildBtcPsbt({
     ckbVirtualTx: ckbRawTx,
     commitment,
-    tos: [receiverBtcAddress],
-    needPaymaster: needPaymasterCell,
+    tos: [rgbppClient.getBtcAddress()],
     feeRate: btcFeeRate,
   });
-  const { txId: susBtcTxId } = await rgbppClient.signAndSendBtcPsbt(psbt);
 
-  console.log(`RGB++ xUDT transfer BTC tx: ${susBtcTxId}`);
+  const { txId: susBtcTxId } = await rgbppClient.signAndSendBtcPsbt(psbt);
+  console.log(`RGB++ xUDT Leap from BTC to CKB tx: ${susBtcTxId}`);
+
+  await rgbppClient.sendRgbppCkbTransaction(susBtcTxId, leapCkbVirtualTxResult);
 
   let attempt = 0;
   const interval = setInterval(async () => {
@@ -63,7 +70,7 @@ const transferRgbppXudt = async (args: {
         clearInterval(interval);
         if (state === 'completed') {
           const ckbTxHash = await rgbppClient.getRgbppTransactionHash(susBtcTxId);
-          console.info(`RGB++ asset has been transferred on BTC and the related CKB tx is ${ckbTxHash}`);
+          console.info(`RGB++ asset has been leaped from BTC to CKB and the related CKB tx is ${ckbTxHash}`);
         } else {
           console.warn(`RGB++ CKB transaction failed: ${failedReason} `);
         }
@@ -76,15 +83,15 @@ const transferRgbppXudt = async (args: {
 
 const parseArgs = ({
   btcOutpoints,
-  receiverBtcAddress,
+  toCkbAddress,
   rgbppXudtUniqueId,
-  transferAmountStr,
+  leapAmountStr,
   btcFeeRateStr,
 }: {
   btcOutpoints: string;
-  receiverBtcAddress: string;
+  toCkbAddress: string;
   rgbppXudtUniqueId: string;
-  transferAmountStr: string;
+  leapAmountStr: string;
   btcFeeRateStr?: string;
 }) => {
   const btcOutpointList = btcOutpoints.split(';').map((outpoint) => {
@@ -99,37 +106,38 @@ const parseArgs = ({
       throw new Error('index in BTC outpoint is not a number');
     }
   });
-  let amount: bigint;
+  let leapAmount: bigint;
   try {
-    amount = BigInt(transferAmountStr) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
+    leapAmount = BigInt(leapAmountStr) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
   } catch (error) {
-    throw new Error('RGBPP_XUDT_TRANSFER_AMOUNT is not a number');
+    throw new Error('RGBPP_XUDT_LEAP_AMOUNT is not a number');
   }
   if (btcFeeRateStr) {
     try {
       const btcFeeRate = parseInt(btcFeeRateStr);
-      return { btcOutpointList, receiverBtcAddress, rgbppXudtUniqueId, amount, btcFeeRate };
+      return { btcOutpointList, toCkbAddress, rgbppXudtUniqueId, leapAmount, btcFeeRate };
     } catch (error) {
       throw new Error('RGBPP_BTC_FEE_RATE is not a number');
     }
-  } else {
-    return { btcOutpointList, receiverBtcAddress, rgbppXudtUniqueId, amount };
   }
+  return { btcOutpointList, toCkbAddress, rgbppXudtUniqueId, leapAmount };
 };
 
-transferRgbppXudt({
+leapXudtFromBtcToCKB({
   btcOutpoints: process.env.RGBPP_XUDT_BTC_OUT_POINTS!,
-  receiverBtcAddress: process.env.RGBPP_XUDT_RECEIVER_BTC_ADDRESS!,
+  toCkbAddress: process.env.RGBPP_XUDT_TO_CKB_ADDRESS!,
   rgbppXudtUniqueId: process.env.RGBPP_XUDT_UNIQUE_ID!,
-  transferAmountStr: process.env.RGBPP_XUDT_TRANSFER_AMOUNT!,
+  leapAmountStr: process.env.RGBPP_XUDT_LEAP_AMOUNT!,
   btcFeeRateStr: process.env.RGBPP_BTC_FEE_RATE,
 });
 
 /* 
 Usage:
-RGBPP_XUDT_BTC_OUT_POINTS=<btc_tx_id_1:btc_out_index_1;btc_tx_id_2:btc_out_index_2;...> RGBPP_XUDT_RECEIVER_BTC_ADDRESS=<receiver_btc_address> RGBPP_XUDT_UNIQUE_ID=<rgbpp_xudt_unique_id> RGBPP_XUDT_TRANSFER_AMOUNT=<transfer_amount> [RGBPP_BTC_FEE_RATE=<btc_fee_rate>] npx tsx xudt/2-btc-transfer-rfc.ts 
+
+RGBPP_XUDT_BTC_OUT_POINTS=<btc_tx_id_1:btc_out_index_1;btc_tx_id_2:btc_out_index_2;...> 
+RGBPP_XUDT_TO_CKB_ADDRESS=<to_ckb_address> RGBPP_XUDT_UNIQUE_ID=<rgbpp_xudt_unique_id> RGBPP_XUDT_LEAP_AMOUNT=<leap_amount> [RGBPP_BTC_FEE_RATE=<btc_fee_rate>] npx tsx xudt/3-btc-leap-ckb-rfc.ts 
 
 Note:
-- RGBPP_XUDT_TRANSFER_AMOUNT should be the raw amount without decimals (e.g., use 100_0000 for 1M tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
-- RGBPP_BTC_FEE_RATE is optional, if not provided, the default fee rate will be used
+- RGBPP_XUDT_LEAP_AMOUNT should be the raw amount without decimals (e.g., use 100_0000 for 1M tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
+- RGBPP_BTC_FEE_RATE is optional, uses default network fee rate if not specified
 */

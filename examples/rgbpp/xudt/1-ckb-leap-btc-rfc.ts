@@ -67,22 +67,22 @@ const parseArgs = ({
     const leapAmount = BigInt(leapAmountStr) * BigInt(10 ** RGBPP_TOKEN_INFO.decimal);
     return { btcTxId, btcOutIndex, rgbppXudtUniqueId, leapAmount };
   } catch (error) {
-    throw new Error('RGBPP_XUDT_CKB_TO_BTC_LEAP_AMOUNT is not a number');
+    throw new Error('RGBPP_XUDT_LEAP_AMOUNT is not a number');
   }
 };
 
 leapXudtFromCkbToBtc({
-  btcTxId: process.env.RGBPP_XUDT_TRANSFER_BTC_TX_ID!,
-  btcOutIndexStr: process.env.RGBPP_XUDT_TRANSFER_BTC_OUT_INDEX!,
+  btcTxId: process.env.RGBPP_XUDT_BTC_TX_ID!,
+  btcOutIndexStr: process.env.RGBPP_XUDT_BTC_OUT_INDEX!,
   rgbppXudtUniqueId: process.env.RGBPP_XUDT_UNIQUE_ID!,
-  leapAmountStr: process.env.RGBPP_XUDT_CKB_TO_BTC_LEAP_AMOUNT!,
+  leapAmountStr: process.env.RGBPP_XUDT_LEAP_AMOUNT!,
 });
 
 /* 
 Usage:
 
-RGBPP_XUDT_TRANSFER_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_TRANSFER_BTC_OUT_INDEX=<btc_out_index> RGBPP_XUDT_UNIQUE_ID=<rgbpp_xudt_unique_id> RGBPP_XUDT_CKB_TO_BTC_LEAP_AMOUNT=<leap_amount> npx tsx xudt/1-ckb-leap-btc-rfc.ts 
+RGBPP_XUDT_BTC_TX_ID=<btc_tx_id> RGBPP_XUDT_BTC_OUT_INDEX=<btc_out_index> RGBPP_XUDT_UNIQUE_ID=<rgbpp_xudt_unique_id> RGBPP_XUDT_LEAP_AMOUNT=<leap_amount> npx tsx xudt/1-ckb-leap-btc-rfc.ts 
 
 Note:
-- RGBPP_XUDT_CKB_TO_BTC_LEAP_AMOUNT should be the raw amount without decimals (e.g., use 1000 for 1000 tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
+- RGBPP_XUDT_LEAP_AMOUNT should be the raw amount without decimals (e.g., use 1000 for 1000 tokens, the decimal places will be automatically applied based on RGBPP_TOKEN_INFO.decimal)
 */
