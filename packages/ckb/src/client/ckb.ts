@@ -1,4 +1,11 @@
 import { ccc } from '@ckb-ccc/core';
+import {
+  blake160,
+  bytesToHex,
+  privateKeyToPublicKey,
+  scriptToAddress,
+  systemScripts,
+} from '@nervosnetwork/ckb-sdk-utils';
 
 import { ICkbClient, IRpcClient, ISigner, IXudtTxBuilder, ISporePartialTxBuilder } from './interfaces';
 import { CkbWaitTransactionConfig } from './types';
@@ -23,6 +30,7 @@ export class CkbClient2 implements ICkbClient {
     private readonly sporePartialTxBuilder: ISporePartialTxBuilder,
     private explorerBaseUrl: string,
     private privateKey: string,
+    private ckbAddress: string,
 
     private collector: Collector,
   ) {}
@@ -33,6 +41,13 @@ export class CkbClient2 implements ICkbClient {
 
     const rpcClientAdapter = new CccRpcClientAdapter(rpcClient);
     const signer = new CkbSigner(new ccc.SignerCkbPrivateKey(rpcClient, ckbPrivateKey));
+    const ckbAddress = scriptToAddress(
+      {
+        ...systemScripts.SECP256K1_BLAKE160,
+        args: bytesToHex(blake160(privateKeyToPublicKey(ckbPrivateKey))),
+      },
+      isOnMainnet,
+    );
     const xudtTxBuilder = new XudtCkbTxBuilder(isOnMainnet);
     const sporePartialTxBuilder = new SporePartialCkbTxBuilder(rpcClient);
     const explorerBaseUrl = isOnMainnet ? 'https://explorer.nervos.org' : 'https://testnet.explorer.nervos.org';
@@ -55,6 +70,7 @@ export class CkbClient2 implements ICkbClient {
       sporePartialTxBuilder,
       explorerBaseUrl,
       ckbPrivateKey,
+      ckbAddress,
       collector,
     );
   }
@@ -137,7 +153,7 @@ export class CkbClient2 implements ICkbClient {
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
   ) {
-    return this.xudtTxBuilder.assembleXudtIssuanceTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+    return this.xudtTxBuilder.assembleIssuanceTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
   }
 
   async assembleXudtBatchTransferTx(
@@ -148,16 +164,21 @@ export class CkbClient2 implements ICkbClient {
     sumInputsCapacity: string,
     ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction> {
-    return this.xudtTxBuilder.assembleXudtBatchTransferTx(
+    return this.xudtTxBuilder.assembleBatchTransferTx(
       rawTx,
       btcTxId,
       btcTxBytes,
       rgbppApiSpvProof,
       this.privateKey,
+      this.ckbAddress,
       this.collector,
       sumInputsCapacity,
       ckbFeeRate,
     );
+  }
+
+  async assembleLeapFromCkbToBtcTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction> {
+    return this.xudtTxBuilder.assembleLeapFromCkbToBtcTx(ckbRawTx, this.collector, this.privateKey);
   }
 
   async xudtIssuanceTx(
@@ -201,6 +222,28 @@ export class CkbClient2 implements ICkbClient {
       btcOutpoints,
       rgbppReceivers,
       btcTestnetType,
+    );
+  }
+
+  async xudtLeapFromCkbToBtcTx(
+    xudtTypeArgs: string,
+    leapAmount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+    witnessLockPlaceholderSize?: number,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction> {
+    return this.xudtTxBuilder.leapFromCkbToBtcTx(
+      this.collector,
+      xudtTypeArgs,
+      this.ckbAddress,
+      btcTxId,
+      btcOutIdx,
+      leapAmount,
+      btcTestnetType,
+      witnessLockPlaceholderSize,
+      ckbFeeRate,
     );
   }
 }

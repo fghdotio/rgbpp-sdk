@@ -39,6 +39,8 @@ export interface ICkbClient {
     ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction>;
 
+  assembleLeapFromCkbToBtcTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction>;
+
   xudtIssuancePreparationTx(
     tokenInfo: RgbppTokenInfo,
     btcTxId: string,
@@ -61,6 +63,16 @@ export interface ICkbClient {
     rgbppReceivers: RgbppBtcAddressReceiver[],
     btcTestnetType: BTCTestnetType | undefined,
   ): Promise<BtcBatchTransferVirtualTxResult>;
+
+  xudtLeapFromCkbToBtcTx(
+    xudtTypeArgs: string,
+    leapAmount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+    witnessLockPlaceholderSize?: number,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction>;
 }
 
 export interface IRpcClient {
@@ -93,22 +105,29 @@ export interface IXudtTxBuilder {
     btcTestnetType?: BTCTestnetType,
   ): ccc.Transaction;
 
-  assembleXudtIssuanceTx(
+  assembleIssuanceTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
   ): Promise<CKBComponents.RawTransaction>;
 
-  assembleXudtBatchTransferTx(
+  assembleBatchTransferTx(
     ckbRawTx: CKBComponents.RawTransaction,
     btcTxId: string,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
     ckbPrivateKey: string,
+    issuerCkbAddress: string,
     collector: Collector,
     sumInputsCapacity: string,
     ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction>;
+
+  assembleLeapFromCkbToBtcTx(
+    ckbRawTx: CKBComponents.RawTransaction,
+    collector: Collector,
+    ckbPrivateKey: string,
   ): Promise<CKBComponents.RawTransaction>;
 
   // partial tx
@@ -135,8 +154,19 @@ export interface IXudtTxBuilder {
 
   transferTx(): Promise<void>;
   leapFromBtcToCkbTx(): Promise<void>;
-  leapFromCkbToBtcTx(): Promise<void>;
   btcTimeCellsSpentTx(): Promise<void>;
+
+  leapFromCkbToBtcTx(
+    collector: Collector,
+    xudtTypeArgs: string,
+    fromCkbAddress: string,
+    btcTxId: string,
+    btcOutIdx: number,
+    leapAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    witnessLockPlaceholderSize?: number,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction>;
 }
 
 export interface ISporePartialTxBuilder {

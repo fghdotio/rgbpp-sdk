@@ -1,26 +1,33 @@
 import { ccc } from '@ckb-ccc/core';
+import { serializeScript } from '@nervosnetwork/ckb-sdk-utils';
 
-import { IXudtTxBuilder } from './interfaces';
-import { RgbppTokenInfo } from '../types/rgbpp';
-import { calculateRgbppCellCapacity, calculateRgbppTokenInfoCellCapacity } from '../utils/ckb-tx';
-import { buildRgbppLockArgs, buildPreLockArgs } from '../utils/rgbpp';
-import { BTCTestnetType } from '../types';
-import { getRgbppLockScript, getXudtTypeScript } from '../constants';
-import { genRgbppLaunchCkbVirtualTx, updateCkbTxWithRealBtcTxId, genBtcBatchTransferCkbVirtualTx } from '../rgbpp';
-import { Collector } from '../collector';
-import { RgbppLaunchVirtualTxResult } from '../types';
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
-import { appendCkbTxWitnesses, appendIssuerCellToBtcBatchTransfer } from '../rgbpp';
-import { RgbppBtcAddressReceiver, BtcBatchTransferVirtualTxResult } from '../types';
 
 import {
-  blake160,
-  bytesToHex,
-  privateKeyToPublicKey,
-  scriptToAddress,
-  systemScripts,
-  serializeScript,
-} from '@nervosnetwork/ckb-sdk-utils';
+  BTCTestnetType,
+  RgbppLaunchVirtualTxResult,
+  RgbppBtcAddressReceiver,
+  BtcBatchTransferVirtualTxResult,
+  RgbppTokenInfo,
+} from '../types';
+import {
+  calculateRgbppCellCapacity,
+  calculateRgbppTokenInfoCellCapacity,
+  buildRgbppLockArgs,
+  buildPreLockArgs,
+} from '../utils';
+import { getRgbppLockScript, getXudtTypeScript, getSecp256k1CellDep } from '../constants';
+import {
+  genRgbppLaunchCkbVirtualTx,
+  updateCkbTxWithRealBtcTxId,
+  genBtcBatchTransferCkbVirtualTx,
+  appendCkbTxWitnesses,
+  appendIssuerCellToBtcBatchTransfer,
+  genCkbJumpBtcVirtualTx,
+} from '../rgbpp';
+import { Collector } from '../collector';
+
+import { IXudtTxBuilder } from './interfaces';
 
 export class XudtCkbTxBuilder implements IXudtTxBuilder {
   constructor(private isOnMainnet: boolean) {}
@@ -69,7 +76,7 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     return tx;
   }
 
-  async assembleXudtIssuanceTx(
+  async assembleIssuanceTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string,
     btcTxBytes: string,
@@ -83,12 +90,13 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     });
   }
 
-  async assembleXudtBatchTransferTx(
+  async assembleBatchTransferTx(
     ckbRawTx: CKBComponents.RawTransaction,
     btcTxId: string,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
     ckbPrivateKey: string,
+    issuerCkbAddress: string,
     collector: Collector,
     sumInputsCapacity: string,
     ckbFeeRate?: bigint,
@@ -100,23 +108,31 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
       rgbppApiSpvProof,
     });
 
-    const issuerAddress = scriptToAddress(
-      {
-        ...systemScripts.SECP256K1_BLAKE160,
-        args: bytesToHex(blake160(privateKeyToPublicKey(ckbPrivateKey))),
-      },
-      this.isOnMainnet,
-    );
-
     return appendIssuerCellToBtcBatchTransfer({
       secp256k1PrivateKey: ckbPrivateKey,
-      issuerAddress,
+      issuerAddress: issuerCkbAddress,
       collector,
       ckbRawTx: ckbTxWithWitnesses,
       sumInputsCapacity,
       isMainnet: this.isOnMainnet,
       ckbFeeRate,
     });
+  }
+
+  async assembleLeapFromCkbToBtcTx(
+    ckbRawTx: CKBComponents.RawTransaction,
+    collector: Collector,
+    ckbPrivateKey: string,
+  ): Promise<CKBComponents.RawTransaction> {
+    const emptyWitness = { lock: '', inputType: '', outputType: '' };
+    const unsignedTx: CKBComponents.RawTransactionToSign = {
+      ...ckbRawTx,
+      cellDeps: [...ckbRawTx.cellDeps, getSecp256k1CellDep(this.isOnMainnet)],
+      witnesses: [emptyWitness, ...ckbRawTx.witnesses.slice(1)],
+    };
+    const signedTx = collector.getCkb().signTransaction(ckbPrivateKey)(unsignedTx);
+
+    return signedTx;
   }
 
   async issuanceTx(
@@ -173,7 +189,28 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     throw new Error('Not implemented');
   }
 
-  async leapFromCkbToBtcTx() {
-    throw new Error('Not implemented');
+  async leapFromCkbToBtcTx(
+    collector: Collector,
+    xudtTypeArgs: string,
+    fromCkbAddress: string,
+    btcTxId: string,
+    btcOutIdx: number,
+    leapAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    witnessLockPlaceholderSize?: number,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction> {
+    const rgbppXudtOwnerLockArgs = buildRgbppLockArgs(btcOutIdx, btcTxId);
+
+    return genCkbJumpBtcVirtualTx({
+      collector,
+      fromCkbAddress,
+      toRgbppLockArgs: rgbppXudtOwnerLockArgs,
+      xudtTypeBytes: serializeScript(this.generateXudtTypeScript(xudtTypeArgs)),
+      transferAmount: leapAmount,
+      witnessLockPlaceholderSize,
+      btcTestnetType,
+      ckbFeeRate,
+    });
   }
 }

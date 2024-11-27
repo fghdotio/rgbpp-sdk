@@ -72,7 +72,7 @@ const distributeRgbppXudtOnBtc = async (args: {
       const rgbppApiSpvProof = await rgbppClient.getRgbppSpvProof(susBtcTxId);
       clearInterval(interval);
 
-      const ckbFinalTx = await rgbppClient.assembleXudtBatchTransferTx(
+      const ckbFinalTx = await rgbppClient.assembleXudtBatchTransferCkbTx(
         ckbRawTx,
         susBtcTxId,
         btcTxBytes,

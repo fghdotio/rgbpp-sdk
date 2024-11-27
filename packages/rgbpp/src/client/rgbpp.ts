@@ -68,7 +68,7 @@ export class RgbppClient2 {
     return this.ckbClient.assembleXudtIssuanceTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
   }
 
-  async assembleXudtBatchTransferTx(
+  async assembleXudtBatchTransferCkbTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string | BtcTxHash,
     btcTxBytes: string,
@@ -89,6 +89,12 @@ export class RgbppClient2 {
     );
   }
 
+  async assembleXudtLeapFromCkbToBtcCkbTx(
+    ckbRawTx: CKBComponents.RawTransaction,
+  ): Promise<CKBComponents.RawTransaction> {
+    return this.ckbClient.assembleLeapFromCkbToBtcTx(ckbRawTx);
+  }
+
   async xudtIssuanceCkbTx(
     tokenInfo: RgbppTokenInfo,
     amount: bigint,
@@ -105,6 +111,25 @@ export class RgbppClient2 {
     rgbppReceivers: RgbppBtcAddressReceiver[],
   ): Promise<BtcBatchTransferVirtualTxResult> {
     return this.ckbClient.xudtBatchTransferTx(xudtTypeArgs, btcOutpoints, rgbppReceivers, this.getBtcTestnetType());
+  }
+
+  async xudtLeapFromCkbToBtcCkbTx(
+    xudtTypeArgs: string,
+    leapAmount: bigint,
+    btcTxId: string,
+    btcOutIdx: number,
+    witnessLockPlaceholderSize?: number,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction> {
+    return this.ckbClient.xudtLeapFromCkbToBtcTx(
+      xudtTypeArgs,
+      leapAmount,
+      btcTxId,
+      btcOutIdx,
+      this.getBtcTestnetType(),
+      witnessLockPlaceholderSize,
+      ckbFeeRate,
+    );
   }
 
   async buildBtcPsbt(rgbppUtxoProps: RgbppUtxoProps): Promise<bitcoin.Psbt> {
