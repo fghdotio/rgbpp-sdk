@@ -1,10 +1,17 @@
-import { BTCTestnetType, Collector } from '@rgbpp-sdk/ckb';
 import * as bitcoin from 'bitcoinjs-lib';
 
-import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+import { BTCTestnetType, Collector } from '@rgbpp-sdk/ckb';
+
+import {
+  RgbppApiSpvProof,
+  RgbppApiTransactionState,
+  RgbppApiTransactionStateParams,
+  RgbppApiCkbTransactionHash,
+} from '@rgbpp-sdk/service';
+
+import { BtcTxHash } from './types';
 
 import { SendRgbppUtxosProps } from '../api/sendRgbppUtxos';
-import { BtcTxHash } from './types';
 
 export interface IBtcClient {
   getTestnetType(): BTCTestnetType | undefined;
@@ -20,6 +27,13 @@ export interface IBtcClient {
   }>;
 
   getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations: number): Promise<RgbppApiSpvProof>;
+
+  getRgbppTransactionState(
+    btcTxId: string | BtcTxHash,
+    rgbppApiTransactionStateParams?: RgbppApiTransactionStateParams,
+  ): Promise<RgbppApiTransactionState>;
+
+  getRgbppTransactionHash(btcTxId: string | BtcTxHash): Promise<RgbppApiCkbTransactionHash>;
 }
 
 export interface RgbppUtxoProps extends Omit<SendRgbppUtxosProps, 'source' | 'ckbCollector' | 'from'> {}

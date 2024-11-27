@@ -50,7 +50,7 @@ export class RgbppClient {
   }
 
   async getRgbppSpvProof(btcTxId: string, confirmations: number) {
-    return await this.btcClient.getRgbppSpvProof(btcTxId, confirmations);
+    return this.btcClient.getRgbppSpvProof(btcTxId, confirmations);
   }
 
   async sendCkbTransaction(tx: ccc.TransactionLike, config?: CkbWaitTransactionConfig) {

@@ -9,11 +9,12 @@ import {
   RgbppXudtIssuanceResult,
   RgbppBtcAddressReceiver,
   BtcBatchTransferVirtualTxResult,
+  BtcTransferVirtualTxResult,
 } from '@rgbpp-sdk/ckb';
 
 import { IBtcClient, BtcClient2, bitcoin, RgbppUtxoProps, BtcTxHash } from '@rgbpp-sdk/btc';
 
-import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+import { RgbppApiSpvProof, RgbppApiTransactionState, RgbppApiTransactionStateParams } from '@rgbpp-sdk/service';
 
 import { RgbppClientConfig } from './types';
 
@@ -105,6 +106,25 @@ export class RgbppClient2 {
     return this.ckbClient.xudtIssuanceTx(tokenInfo, amount, btcTxId, btcOutIdx, this.getBtcTestnetType(), feeRate);
   }
 
+  async xudtTransferCkbTx(
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    transferAmount: bigint,
+    feeRate?: bigint,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcTransferVirtualTxResult> {
+    return this.ckbClient.xudtTransferTx(
+      xudtTypeArgs,
+      btcOutpoints,
+      transferAmount,
+      this.getBtcTestnetType(),
+      feeRate,
+      noMergeOutputCells,
+      witnessLockPlaceholderSize,
+    );
+  }
+
   async xudtBatchTransferCkbTx(
     xudtTypeArgs: string,
     btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
@@ -118,8 +138,8 @@ export class RgbppClient2 {
     leapAmount: bigint,
     btcTxId: string,
     btcOutIdx: number,
-    witnessLockPlaceholderSize?: number,
     ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
   ): Promise<CKBComponents.RawTransaction> {
     return this.ckbClient.xudtLeapFromCkbToBtcTx(
       xudtTypeArgs,
@@ -127,8 +147,8 @@ export class RgbppClient2 {
       btcTxId,
       btcOutIdx,
       this.getBtcTestnetType(),
-      witnessLockPlaceholderSize,
       ckbFeeRate,
+      witnessLockPlaceholderSize,
     );
   }
 
@@ -144,11 +164,23 @@ export class RgbppClient2 {
     return this.btcClient.signAndSendPsbt(psbt);
   }
 
-  getBtcAddress() {
+  getBtcAddress(): string {
     return this.btcClient.getBtcAddress();
   }
 
-  getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {
+  async getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {
     return this.btcClient.getRgbppSpvProof(btcTxId, confirmations);
+  }
+
+  async getRgbppTransactionState(
+    btcTxId: string | BtcTxHash,
+    rgbppApiTransactionStateParams?: RgbppApiTransactionStateParams,
+  ): Promise<RgbppApiTransactionState> {
+    return this.btcClient.getRgbppTransactionState(btcTxId, rgbppApiTransactionStateParams);
+  }
+
+  async getRgbppTransactionHash(btcTxId: string | BtcTxHash): Promise<CkbTxHash> {
+    const { txhash: txHash } = await this.btcClient.getRgbppTransactionHash(btcTxId);
+    return this.ckbClient.newCkbTxHash(txHash);
   }
 }

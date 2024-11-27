@@ -384,7 +384,7 @@ export async function createSendRgbppUtxosBuilderCCC(props: BuildRgbppUtxosProps
 
   const mergedBtcOutputs = await getMergedBtcOutputsCCC(btcOutputs, props);
 
-  return await createSendUtxosBuilder({
+  return createSendUtxosBuilder({
     inputs: btcInputs,
     outputs: mergedBtcOutputs,
     from: props.from,

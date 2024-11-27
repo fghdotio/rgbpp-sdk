@@ -9,6 +9,7 @@ import {
   RgbppBtcAddressReceiver,
   BtcBatchTransferVirtualTxResult,
   RgbppTokenInfo,
+  BtcTransferVirtualTxResult,
 } from '../types';
 import {
   calculateRgbppCellCapacity,
@@ -24,6 +25,7 @@ import {
   appendCkbTxWitnesses,
   appendIssuerCellToBtcBatchTransfer,
   genCkbJumpBtcVirtualTx,
+  genBtcTransferCkbVirtualTx,
 } from '../rgbpp';
 import { Collector } from '../collector';
 
@@ -83,7 +85,7 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     rgbppApiSpvProof: RgbppApiSpvProof,
   ): Promise<CKBComponents.RawTransaction> {
     const updatedRawTx = updateCkbTxWithRealBtcTxId({ ckbRawTx: rawTx, btcTxId, isMainnet: this.isOnMainnet });
-    return await appendCkbTxWitnesses({
+    return appendCkbTxWitnesses({
       ckbRawTx: updatedRawTx,
       btcTxBytes,
       rgbppApiSpvProof,
@@ -145,7 +147,7 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     feeRate?: bigint,
   ): Promise<RgbppLaunchVirtualTxResult> {
     const rgbppXudtOwnerLockArgs = buildRgbppLockArgs(btcOutIdx, btcTxId);
-    return await genRgbppLaunchCkbVirtualTx({
+    return genRgbppLaunchCkbVirtualTx({
       collector,
       ownerRgbppLockArgs: rgbppXudtOwnerLockArgs,
       rgbppTokenInfo: tokenInfo,
@@ -167,7 +169,7 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
 
     const xudtTypeBytes = serializeScript(this.generateXudtTypeScript(xudtTypeArgs));
 
-    return await genBtcBatchTransferCkbVirtualTx({
+    return genBtcBatchTransferCkbVirtualTx({
       collector,
       xudtTypeBytes,
       rgbppLockArgsList,
@@ -177,8 +179,29 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     });
   }
 
-  async transferTx() {
-    throw new Error('Not implemented');
+  async transferTx(
+    collector: Collector,
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    transferAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcTransferVirtualTxResult> {
+    const rgbppLockArgsList = btcOutpoints.map(({ btcTxId, btcOutIdx }) => buildRgbppLockArgs(btcOutIdx, btcTxId));
+
+    return genBtcTransferCkbVirtualTx({
+      collector,
+      xudtTypeBytes: serializeScript(this.generateXudtTypeScript(xudtTypeArgs)),
+      rgbppLockArgsList,
+      transferAmount,
+      isMainnet: this.isOnMainnet,
+      btcTestnetType,
+      ckbFeeRate,
+      noMergeOutputCells,
+      witnessLockPlaceholderSize,
+    });
   }
 
   async leapFromBtcToCkbTx() {
@@ -197,8 +220,8 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     btcOutIdx: number,
     leapAmount: bigint,
     btcTestnetType?: BTCTestnetType,
-    witnessLockPlaceholderSize?: number,
     ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
   ): Promise<CKBComponents.RawTransaction> {
     const rgbppXudtOwnerLockArgs = buildRgbppLockArgs(btcOutIdx, btcTxId);
 

@@ -36,7 +36,7 @@ export class BtcClient {
   async generatePbst() {}
 
   async getRgbppSpvProof(btcTxId: string, confirmations: number) {
-    return await this.assetsApi.getRgbppSpvProof(btcTxId, confirmations);
+    return this.assetsApi.getRgbppSpvProof(btcTxId, confirmations);
   }
 
   async sendTransaction(psbt: bitcoin.Psbt) {

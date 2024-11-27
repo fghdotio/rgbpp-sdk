@@ -1,11 +1,18 @@
 import { ccc } from '@ckb-ccc/core';
 
+import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+
 import { CkbWaitTransactionConfig, CkbTxHash } from './types';
-import { RgbppTokenInfo, BTCTestnetType } from '../types';
+import {
+  RgbppTokenInfo,
+  BTCTestnetType,
+  RgbppLaunchVirtualTxResult,
+  RgbppBtcAddressReceiver,
+  BtcBatchTransferVirtualTxResult,
+  BtcTransferVirtualTxResult,
+} from '../types';
 import { Collector } from '../collector';
 import { RgbppXudtIssuanceResult } from './types';
-import { RgbppLaunchVirtualTxResult, RgbppBtcAddressReceiver, BtcBatchTransferVirtualTxResult } from '../types';
-import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 
 export interface ICkbClient {
   getCollector(): Collector;
@@ -13,6 +20,8 @@ export interface ICkbClient {
   generateRgbppLockScript(outIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType): ccc.Script;
 
   isOnMainnet(): boolean;
+
+  newCkbTxHash(txHash: string): CkbTxHash;
 
   sendTransaction(tx: CKBComponents.RawTransaction): Promise<CkbTxHash>;
   signAndSendTransaction(
@@ -70,9 +79,19 @@ export interface ICkbClient {
     btcTxId: string,
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
-    witnessLockPlaceholderSize?: number,
     ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
   ): Promise<CKBComponents.RawTransaction>;
+
+  xudtTransferTx(
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    transferAmount: bigint,
+    btcTestnetType: BTCTestnetType | undefined,
+    ckbFeeRate?: bigint,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcTransferVirtualTxResult>;
 }
 
 export interface IRpcClient {
@@ -152,7 +171,17 @@ export interface IXudtTxBuilder {
     btcTestnetType: BTCTestnetType | undefined,
   ): Promise<BtcBatchTransferVirtualTxResult>;
 
-  transferTx(): Promise<void>;
+  transferTx(
+    collector: Collector,
+    xudtTypeArgs: string,
+    btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
+    transferAmount: bigint,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    noMergeOutputCells?: boolean,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<BtcTransferVirtualTxResult>;
+
   leapFromBtcToCkbTx(): Promise<void>;
   btcTimeCellsSpentTx(): Promise<void>;
 
@@ -164,8 +193,8 @@ export interface IXudtTxBuilder {
     btcOutIdx: number,
     leapAmount: bigint,
     btcTestnetType?: BTCTestnetType,
-    witnessLockPlaceholderSize?: number,
     ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
   ): Promise<CKBComponents.RawTransaction>;
 }
 

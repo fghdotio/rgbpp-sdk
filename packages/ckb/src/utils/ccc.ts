@@ -58,7 +58,7 @@ export const addressToScriptCCC = async (address: string): Promise<ccc.Script> =
 
 export const privateKeyToAddressCCC = async (privateKey: string, network: CkbNetwork) => {
   const priv = new ccc.SignerCkbPrivateKey(selectClientCCC(network), privateKey);
-  return await priv.getRecommendedAddress();
+  return priv.getRecommendedAddress();
 };
 
 export const newCkbSignerCCC = (privateKey: string, network: CkbNetwork) => {

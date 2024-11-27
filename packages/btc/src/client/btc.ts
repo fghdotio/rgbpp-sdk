@@ -1,20 +1,22 @@
-import { IBtcClient, RgbppUtxoProps } from './interfaces';
-import { BtcAssetsApi } from '@rgbpp-sdk/service';
+import * as bitcoin from 'bitcoinjs-lib';
 
+import {
+  RgbppApiSpvProof,
+  RgbppApiTransactionState,
+  BtcAssetsApi,
+  RgbppApiTransactionStateParams,
+  RgbppApiCkbTransactionHash,
+} from '@rgbpp-sdk/service';
+import { Collector, BTCTestnetType } from '@rgbpp-sdk/ckb';
+
+import { IBtcClient, RgbppUtxoProps } from './interfaces';
 import { BtcNetwork, BtcAssetsApiConfig, BtcAccountConfig, BtcTxHash } from './types';
+
 import { BtcAccount, createBtcAccount, signPsbt } from '../account';
 import { sendRgbppUtxos } from '../api/sendRgbppUtxos';
 import { DataSource } from '../query/source';
 import { NetworkType } from '../preset/types';
-import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
-
-import { Collector } from '@rgbpp-sdk/ckb';
-
 import { transactionToHex } from '../utils';
-
-import * as bitcoin from 'bitcoinjs-lib';
-
-import { BTCTestnetType } from '@rgbpp-sdk/ckb';
 
 export class BtcClient2 implements IBtcClient {
   constructor(
@@ -64,7 +66,7 @@ export class BtcClient2 implements IBtcClient {
   }
 
   async buildPsbt(rgbppUtxoProps: RgbppUtxoProps, ckbCollector: Collector): Promise<bitcoin.Psbt> {
-    return await sendRgbppUtxos({
+    return sendRgbppUtxos({
       ...rgbppUtxoProps,
       ckbCollector,
       source: this.dataSource,
@@ -93,10 +95,27 @@ export class BtcClient2 implements IBtcClient {
     };
   }
 
-  getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {
+  async getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {
     if (btcTxId instanceof BtcTxHash) {
       btcTxId = btcTxId.raw();
     }
     return this.dataSource.service.getRgbppSpvProof(btcTxId, confirmations);
+  }
+
+  async getRgbppTransactionState(
+    btcTxId: string | BtcTxHash,
+    rgbppApiTransactionStateParams?: RgbppApiTransactionStateParams,
+  ): Promise<RgbppApiTransactionState> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
+    return this.dataSource.service.getRgbppTransactionState(btcTxId, rgbppApiTransactionStateParams);
+  }
+
+  async getRgbppTransactionHash(btcTxId: string | BtcTxHash): Promise<RgbppApiCkbTransactionHash> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
+    return this.dataSource.service.getRgbppTransactionHash(btcTxId);
   }
 }
