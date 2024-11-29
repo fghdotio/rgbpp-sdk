@@ -53,6 +53,10 @@ export class BtcClient2 implements IBtcClient {
     return new BtcClient2(network, btcAccount, btcDataSource, explorerBaseUrls[network]);
   }
 
+  isOnMainnet(): boolean {
+    return this.network === 'Mainnet';
+  }
+
   getTestnetType(): BTCTestnetType | undefined {
     const networkMap: Record<BtcNetwork, BTCTestnetType | undefined> = {
       Testnet3: 'Testnet3',

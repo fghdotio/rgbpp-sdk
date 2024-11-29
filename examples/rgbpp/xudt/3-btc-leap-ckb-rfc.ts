@@ -1,5 +1,5 @@
 import { RgbppClient2, BtcAssetsApiError } from 'rgbpp';
-import { ckbNetwork } from 'rgbpp/ckb';
+import { ckbNetwork, updateCkbTxWithRealBtcTxId } from 'rgbpp/ckb';
 
 import { RGBPP_TOKEN_INFO } from './launch/0-rgbpp-token-info';
 
@@ -59,7 +59,7 @@ const leapXudtFromBtcToCKB = async (args: {
   });
 
   const { txId: susBtcTxId } = await rgbppClient.signAndSendBtcPsbt(psbt);
-  console.log(`RGB++ xUDT Leap from BTC to CKB tx: ${susBtcTxId}`);
+  console.log(`RGB++ xUDT is being leaped from BTC to CKB and the related BTC tx is ${susBtcTxId}`);
 
   await rgbppClient.sendRgbppCkbTransaction(susBtcTxId, leapCkbVirtualTxResult);
 
@@ -73,6 +73,13 @@ const leapXudtFromBtcToCKB = async (args: {
         if (state === 'completed') {
           const ckbTxHash = await rgbppClient.getRgbppTransactionHash(susBtcTxId);
           console.info(`RGB++ asset has been leaped from BTC to CKB and the related CKB tx is ${ckbTxHash}`);
+
+          const rgbppCkbTx = await updateCkbTxWithRealBtcTxId({
+            ckbRawTx,
+            btcTxId: susBtcTxId.raw(),
+            isMainnet: rgbppClient.isOnMainnet(),
+          });
+          console.log(`BTC time lock args:\n${rgbppCkbTx.outputs[0].lock.args}`);
         } else {
           console.warn(`RGB++ CKB transaction failed: ${failedReason}`);
         }

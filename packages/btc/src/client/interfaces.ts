@@ -15,6 +15,7 @@ import { BtcTxHash } from './types';
 import { SendRgbppUtxosProps } from '../api/sendRgbppUtxos';
 
 export interface IBtcClient {
+  isOnMainnet(): boolean;
   getTestnetType(): BTCTestnetType | undefined;
 
   getBtcAddress(): string;

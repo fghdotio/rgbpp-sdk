@@ -28,13 +28,21 @@ export class RgbppClient2 {
   constructor(
     private readonly ckbClient: ICkbClient,
     private readonly btcClient: IBtcClient,
+    private readonly _isOnMainnet: boolean,
   ) {}
 
   static create(config: RgbppClientConfig): RgbppClient2 {
     const ckbClient = CkbClient2.create(config.ckbNetwork, config.ckbPrivateKey, config.ckbJsonRpcUrl);
     const btcClient = BtcClient2.create(config.btcNetwork, config.btcAssetsApiConfig, config.btcAccountConfig);
+    if (ckbClient.isOnMainnet() !== btcClient.isOnMainnet()) {
+      throw new Error('CKB and BTC networks mismatch!');
+    }
 
-    return new RgbppClient2(ckbClient, btcClient);
+    return new RgbppClient2(ckbClient, btcClient, ckbClient.isOnMainnet());
+  }
+
+  isOnMainnet() {
+    return this._isOnMainnet;
   }
 
   async sendCkbTransaction(tx: CKBComponents.RawTransaction): Promise<CkbTxHash> {
