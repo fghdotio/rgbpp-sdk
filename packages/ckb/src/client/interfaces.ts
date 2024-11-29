@@ -1,6 +1,6 @@
 import { ccc } from '@ckb-ccc/core';
 
-import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+import { RgbppApiSpvProof, BtcAssetsApi } from '@rgbpp-sdk/service';
 
 import { CkbWaitTransactionConfig, CkbTxHash, RgbppXudtIssuanceResult } from './types';
 
@@ -50,7 +50,7 @@ export interface ICkbClient {
     ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction>;
 
-  assembleLeapFromCkbToBtcTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction>;
+  assembleXudtLeapFromCkbToBtcTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction>;
 
   xudtIssuancePreparationTx(
     tokenInfo: RgbppTokenInfo,
@@ -91,8 +91,8 @@ export interface ICkbClient {
     btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
     leapAmount: bigint,
     btcTestnetType?: BTCTestnetType,
-    ckbFeeRate?: bigint,
     btcConfirmationBlocks?: number,
+    ckbFeeRate?: bigint,
     noMergeOutputCells?: boolean,
     witnessLockPlaceholderSize?: number,
   ): Promise<BtcJumpCkbVirtualTxResult>;
@@ -105,6 +105,14 @@ export interface ICkbClient {
     btcTestnetType?: BTCTestnetType,
     ckbFeeRate?: bigint,
     witnessLockPlaceholderSize?: number,
+  ): Promise<CKBComponents.RawTransaction>;
+
+  assembleXudtBtcTimeLockUnlockTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction>;
+
+  xudtBtcTimeLockUnlockTx(
+    btcTimeLockScriptArgs: string,
+    btcAssetsApi: BtcAssetsApi,
+    btcTestnetType?: BTCTestnetType,
   ): Promise<CKBComponents.RawTransaction>;
 }
 
@@ -203,8 +211,8 @@ export interface IXudtTxBuilder {
     btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
     leapAmount: bigint,
     btcTestnetType?: BTCTestnetType,
-    ckbFeeRate?: bigint,
     btcConfirmationBlocks?: number,
+    ckbFeeRate?: bigint,
     noMergeOutputCells?: boolean,
     witnessLockPlaceholderSize?: number,
   ): Promise<BtcJumpCkbVirtualTxResult>;
@@ -221,7 +229,19 @@ export interface IXudtTxBuilder {
     witnessLockPlaceholderSize?: number,
   ): Promise<CKBComponents.RawTransaction>;
 
-  btcTimeCellsSpentTx(): Promise<void>;
+  btcTimeLockUnlockTx(
+    lockScriptArgs: string,
+    collector: Collector,
+    btcAssetsApi: BtcAssetsApi,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<CKBComponents.RawTransaction>;
+
+  assembleBtcTimeLockUnlockTx(
+    ckbRawTx: CKBComponents.RawTransaction,
+    privateKey: string,
+    ckbAddress: string,
+    collector: Collector,
+  ): Promise<CKBComponents.RawTransaction>;
 }
 
 export interface ISporePartialTxBuilder {

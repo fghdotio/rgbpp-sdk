@@ -27,6 +27,10 @@ export class BtcClient2 implements IBtcClient {
     private explorerBaseUrl: string,
   ) {}
 
+  static createAssetsApiService(btcAssetsApiConfig: BtcAssetsApiConfig): BtcAssetsApi {
+    return BtcAssetsApi.fromToken(btcAssetsApiConfig.url, btcAssetsApiConfig.token, btcAssetsApiConfig.origin);
+  }
+
   static create(
     network: BtcNetwork,
     btcAssetsApiConfig: BtcAssetsApiConfig,

@@ -1,5 +1,5 @@
 import { RgbppClient2, BtcAssetsApiError } from 'rgbpp';
-import { ckbNetwork, updateCkbTxWithRealBtcTxId } from 'rgbpp/ckb';
+import { ckbNetwork, updateCkbTxWithRealBtcTxId, BTC_JUMP_CONFIRMATION_BLOCKS } from 'rgbpp/ckb';
 
 import { RGBPP_TOKEN_INFO } from './launch/0-rgbpp-token-info';
 
@@ -79,7 +79,13 @@ const leapXudtFromBtcToCKB = async (args: {
             btcTxId: susBtcTxId.raw(),
             isMainnet: rgbppClient.isOnMainnet(),
           });
-          console.log(`BTC time lock args:\n${rgbppCkbTx.outputs[0].lock.args}`);
+
+          console.log(
+            `Execute the following command to unlock the leaped xUDT after ${BTC_JUMP_CONFIRMATION_BLOCKS} BTC block confirmations:\n`,
+          );
+          console.log(
+            `RGBPP_BTC_TIME_LOCK_SCRIPT_ARGS=${rgbppCkbTx.outputs[0].lock.args} npx tsx xudt/4-unlock-btc-time-cell-rfc.ts`,
+          );
         } else {
           console.warn(`RGB++ CKB transaction failed: ${failedReason}`);
         }

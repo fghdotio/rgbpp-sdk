@@ -1,18 +1,8 @@
-import { RgbppClient2 } from 'rgbpp';
-import { ckbNetwork } from 'rgbpp/ckb';
+import { ckbNetwork, CkbClient2 } from 'rgbpp/ckb';
 
 import { RGBPP_TOKEN_INFO } from './launch/0-rgbpp-token-info';
 
-import {
-  BTC_TESTNET_TYPE,
-  CKB_PRIVATE_KEY,
-  ckbAddress,
-  BTC_SERVICE_URL,
-  BTC_SERVICE_TOKEN,
-  BTC_SERVICE_ORIGIN,
-  BTC_PRIVATE_KEY,
-  BTC_ADDRESS_TYPE,
-} from '../env';
+import { CKB_PRIVATE_KEY, ckbAddress } from '../env';
 
 const leapXudtFromCkbToBtc = async (args: {
   btcTxId: string;
@@ -22,27 +12,13 @@ const leapXudtFromCkbToBtc = async (args: {
 }) => {
   const { btcTxId, btcOutIndex, rgbppXudtUniqueId, leapAmount } = parseArgs(args);
 
-  const rgbppClient = RgbppClient2.create({
-    ckbNetwork: ckbNetwork(ckbAddress),
-    ckbPrivateKey: CKB_PRIVATE_KEY,
-    btcNetwork: BTC_TESTNET_TYPE,
-    btcAssetsApiConfig: {
-      url: BTC_SERVICE_URL,
-      token: BTC_SERVICE_TOKEN,
-      origin: BTC_SERVICE_ORIGIN,
-    },
-    btcAccountConfig: {
-      privateKey: BTC_PRIVATE_KEY,
-      addressType: BTC_ADDRESS_TYPE,
-      networkType: BTC_TESTNET_TYPE,
-    },
-  });
+  const ckbClient = CkbClient2.create(ckbNetwork(ckbAddress), CKB_PRIVATE_KEY);
 
-  const ckbRawTx = await rgbppClient.xudtLeapFromCkbToBtcCkbTx(rgbppXudtUniqueId, leapAmount, btcTxId, btcOutIndex);
+  const ckbFinalTx = await ckbClient.assembleXudtLeapFromCkbToBtcTx(
+    await ckbClient.xudtLeapFromCkbToBtcTx(rgbppXudtUniqueId, leapAmount, btcTxId, btcOutIndex),
+  );
 
-  const ckbFinalTx = await rgbppClient.assembleXudtLeapFromCkbToBtcCkbTx(ckbRawTx);
-
-  const txHash = await rgbppClient.sendCkbTransaction(ckbFinalTx);
+  const txHash = await ckbClient.sendTransaction(ckbFinalTx);
   console.log(
     `RGB++ xUDT token (name: ${RGBPP_TOKEN_INFO.name}, symbol: ${RGBPP_TOKEN_INFO.symbol}, decimal: ${RGBPP_TOKEN_INFO.decimal}) has been leaped from CKB to BTC: ${txHash}`,
   );

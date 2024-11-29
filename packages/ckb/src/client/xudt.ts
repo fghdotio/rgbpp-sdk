@@ -1,7 +1,7 @@
 import { ccc } from '@ckb-ccc/core';
 import { serializeScript } from '@nervosnetwork/ckb-sdk-utils';
 
-import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+import { RgbppApiSpvProof, BtcAssetsApi } from '@rgbpp-sdk/service';
 
 import {
   BTCTestnetType,
@@ -18,7 +18,7 @@ import {
   buildRgbppLockArgs,
   buildPreLockArgs,
 } from '../utils';
-import { getRgbppLockScript, getXudtTypeScript, getSecp256k1CellDep } from '../constants';
+import { getRgbppLockScript, getXudtTypeScript, getSecp256k1CellDep, getBtcTimeLockScript } from '../constants';
 import {
   genRgbppLaunchCkbVirtualTx,
   updateCkbTxWithRealBtcTxId,
@@ -28,6 +28,8 @@ import {
   genCkbJumpBtcVirtualTx,
   genBtcTransferCkbVirtualTx,
   genBtcJumpCkbVirtualTx,
+  buildBtcTimeCellsSpentTx,
+  signBtcTimeCellSpentTx,
 } from '../rgbpp';
 import { Collector } from '../collector';
 
@@ -206,8 +208,44 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     });
   }
 
-  async btcTimeCellsSpentTx() {
-    throw new Error('Not implemented');
+  async btcTimeLockUnlockTx(
+    lockScriptArgs: string,
+    collector: Collector,
+    btcAssetsApi: BtcAssetsApi,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<CKBComponents.RawTransaction> {
+    const cells = await collector.getCells({
+      lock: {
+        ...getBtcTimeLockScript(this.isOnMainnet, btcTestnetType),
+        args: lockScriptArgs,
+      },
+      isDataMustBeEmpty: false,
+    });
+    if (!cells || cells.length === 0) {
+      throw new Error('No btc time lock cells found');
+    }
+
+    return await buildBtcTimeCellsSpentTx({
+      btcTimeCells: cells,
+      btcAssetsApi,
+      isMainnet: this.isOnMainnet,
+      btcTestnetType,
+    });
+  }
+
+  async assembleBtcTimeLockUnlockTx(
+    ckbRawTx: CKBComponents.RawTransaction,
+    privateKey: string,
+    ckbAddress: string,
+    collector: Collector,
+  ): Promise<CKBComponents.RawTransaction> {
+    return await signBtcTimeCellSpentTx({
+      secp256k1PrivateKey: privateKey,
+      ckbRawTx,
+      collector,
+      masterCkbAddress: ckbAddress,
+      isMainnet: this.isOnMainnet,
+    });
   }
 
   async leapFromCkbToBtcTx(
@@ -242,8 +280,8 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
     leapAmount: bigint,
     btcTestnetType?: BTCTestnetType,
-    ckbFeeRate?: bigint,
     btcConfirmationBlocks?: number,
+    ckbFeeRate?: bigint,
     noMergeOutputCells?: boolean,
     witnessLockPlaceholderSize?: number,
   ): Promise<BtcJumpCkbVirtualTxResult> {

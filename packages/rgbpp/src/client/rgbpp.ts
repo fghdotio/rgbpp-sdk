@@ -107,7 +107,7 @@ export class RgbppClient2 {
   async assembleXudtLeapFromCkbToBtcCkbTx(
     ckbRawTx: CKBComponents.RawTransaction,
   ): Promise<CKBComponents.RawTransaction> {
-    return this.ckbClient.assembleLeapFromCkbToBtcTx(ckbRawTx);
+    return this.ckbClient.assembleXudtLeapFromCkbToBtcTx(ckbRawTx);
   }
 
   async xudtIssuanceCkbTx(
@@ -171,8 +171,8 @@ export class RgbppClient2 {
     toCkbAddress: string,
     leapAmount: bigint,
     btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
-    ckbFeeRate?: bigint,
     btcConfirmationBlocks?: number,
+    ckbFeeRate?: bigint,
     noMergeOutputCells?: boolean,
     witnessLockPlaceholderSize?: number,
   ): Promise<BtcJumpCkbVirtualTxResult> {
@@ -182,8 +182,8 @@ export class RgbppClient2 {
       btcOutpoints,
       leapAmount,
       this.getBtcTestnetType(),
-      ckbFeeRate,
       btcConfirmationBlocks,
+      ckbFeeRate,
       noMergeOutputCells,
       witnessLockPlaceholderSize,
     );

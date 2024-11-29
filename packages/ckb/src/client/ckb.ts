@@ -7,7 +7,7 @@ import {
   systemScripts,
 } from '@nervosnetwork/ckb-sdk-utils';
 
-import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
+import { RgbppApiSpvProof, BtcAssetsApi } from '@rgbpp-sdk/service';
 
 import { ICkbClient, IRpcClient, ISigner, IXudtTxBuilder, ISporePartialTxBuilder } from './interfaces';
 import { CkbWaitTransactionConfig, CkbTxHash, RgbppXudtIssuanceResult } from './types';
@@ -187,8 +187,20 @@ export class CkbClient2 implements ICkbClient {
     );
   }
 
-  async assembleLeapFromCkbToBtcTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction> {
+  async assembleXudtLeapFromCkbToBtcTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction> {
     return this.xudtTxBuilder.assembleLeapFromCkbToBtcTx(ckbRawTx, this.collector, this.privateKey);
+  }
+
+  async xudtBtcTimeLockUnlockTx(
+    btcTimeLockScriptArgs: string,
+    btcAssetsApi: BtcAssetsApi,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<CKBComponents.RawTransaction> {
+    return this.xudtTxBuilder.btcTimeLockUnlockTx(btcTimeLockScriptArgs, this.collector, btcAssetsApi, btcTestnetType);
+  }
+
+  async assembleXudtBtcTimeLockUnlockTx(ckbRawTx: CKBComponents.RawTransaction): Promise<CKBComponents.RawTransaction> {
+    return this.xudtTxBuilder.assembleBtcTimeLockUnlockTx(ckbRawTx, this.privateKey, this.ckbAddress, this.collector);
   }
 
   async xudtIssuanceTx(
@@ -284,8 +296,8 @@ export class CkbClient2 implements ICkbClient {
     btcOutpoints: { btcTxId: string; btcOutIdx: number }[],
     leapAmount: bigint,
     btcTestnetType?: BTCTestnetType,
-    ckbFeeRate?: bigint,
     btcConfirmationBlocks?: number,
+    ckbFeeRate?: bigint,
     noMergeOutputCells?: boolean,
     witnessLockPlaceholderSize?: number,
   ): Promise<BtcJumpCkbVirtualTxResult> {
@@ -296,8 +308,8 @@ export class CkbClient2 implements ICkbClient {
       btcOutpoints,
       leapAmount,
       btcTestnetType,
-      ckbFeeRate,
       btcConfirmationBlocks,
+      ckbFeeRate,
       noMergeOutputCells,
       witnessLockPlaceholderSize,
     );
