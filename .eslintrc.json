@@ -17,5 +17,13 @@
     "@typescript-eslint"
   ],
   "rules": {
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/mocks.ts"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "off"
+      }
+    }
+  ]
 }

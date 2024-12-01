@@ -27,10 +27,6 @@ export class BtcClient2 implements IBtcClient {
     private explorerBaseUrl: string,
   ) {}
 
-  static createAssetsApiService(btcAssetsApiConfig: BtcAssetsApiConfig): BtcAssetsApi {
-    return BtcAssetsApi.fromToken(btcAssetsApiConfig.url, btcAssetsApiConfig.token, btcAssetsApiConfig.origin);
-  }
-
   static create(
     network: BtcNetwork,
     btcAssetsApiConfig: BtcAssetsApiConfig,
@@ -55,6 +51,10 @@ export class BtcClient2 implements IBtcClient {
     };
 
     return new BtcClient2(network, btcAccount, btcDataSource, explorerBaseUrls[network]);
+  }
+
+  static createAssetsApiService(btcAssetsApiConfig: BtcAssetsApiConfig): BtcAssetsApi {
+    return BtcAssetsApi.fromToken(btcAssetsApiConfig.url, btcAssetsApiConfig.token, btcAssetsApiConfig.origin);
   }
 
   isOnMainnet(): boolean {
@@ -104,16 +104,6 @@ export class BtcClient2 implements IBtcClient {
     };
   }
 
-  async sendRgbppCkbTransaction(
-    btcTxId: string | BtcTxHash,
-    ckbVirtualResult: string | RgbppApiSendCkbVirtualResult,
-  ): Promise<RgbppApiTransactionState> {
-    if (btcTxId instanceof BtcTxHash) {
-      btcTxId = btcTxId.raw();
-    }
-    return this.dataSource.service.sendRgbppCkbTransaction({ btc_txid: btcTxId, ckb_virtual_result: ckbVirtualResult });
-  }
-
   async getRgbppSpvProof(btcTxId: string | BtcTxHash, confirmations = 0): Promise<RgbppApiSpvProof> {
     if (btcTxId instanceof BtcTxHash) {
       btcTxId = btcTxId.raw();
@@ -136,5 +126,15 @@ export class BtcClient2 implements IBtcClient {
       btcTxId = btcTxId.raw();
     }
     return this.dataSource.service.getRgbppTransactionHash(btcTxId);
+  }
+
+  async sendRgbppCkbTransaction(
+    btcTxId: string | BtcTxHash,
+    ckbVirtualResult: string | RgbppApiSendCkbVirtualResult,
+  ): Promise<RgbppApiTransactionState> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
+    return this.dataSource.service.sendRgbppCkbTransaction({ btc_txid: btcTxId, ckb_virtual_result: ckbVirtualResult });
   }
 }
