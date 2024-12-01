@@ -23,6 +23,9 @@ import {
 } from '@rgbpp-sdk/service';
 
 import { RgbppClientConfig } from './types';
+import { TransferAllTxsParams } from './interfaces';
+import { RgbppTransferAllTxsResult } from '../rgbpp/types/xudt';
+import { buildRgbppTransferAllTxs } from '../rgbpp/xudt/btc-transfer-all';
 
 export class RgbppClient2 {
   constructor(
@@ -137,6 +140,21 @@ export class RgbppClient2 {
       noMergeOutputCells,
       witnessLockPlaceholderSize,
     );
+  }
+
+  async xudtTransferAll(params: TransferAllTxsParams): Promise<RgbppTransferAllTxsResult> {
+    return buildRgbppTransferAllTxs({
+      ckb: {
+        ...params.ckb,
+        collector: this.ckbClient.getCollector(),
+      },
+      btc: {
+        ...params.btc,
+        dataSource: this.btcClient.getDataSource(),
+        testnetType: this.getBtcTestnetType(),
+      },
+      isMainnet: this.isOnMainnet(),
+    });
   }
 
   async xudtBatchTransferCkbTx(

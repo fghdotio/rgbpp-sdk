@@ -13,11 +13,13 @@ import {
 import { BtcTxHash } from './types';
 
 import { SendRgbppUtxosProps } from '../api/sendRgbppUtxos';
+import { DataSource } from '../query/source';
 
 export interface IBtcClient {
   isOnMainnet(): boolean;
   getTestnetType(): BTCTestnetType | undefined;
   getBtcAddress(): string;
+  getDataSource(): DataSource;
 
   buildPsbt(rgbppUtxoProps: RgbppUtxoProps, ckbCollector: Collector): Promise<Psbt>;
   signAndSendPsbt(psbt: Psbt): Promise<{

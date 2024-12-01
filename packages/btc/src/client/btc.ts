@@ -70,8 +70,12 @@ export class BtcClient2 implements IBtcClient {
     return networkMap[this.network];
   }
 
-  getBtcAddress() {
+  getBtcAddress(): string {
     return this.btcAccount.from;
+  }
+
+  getDataSource(): DataSource {
+    return this.dataSource;
   }
 
   async buildPsbt(rgbppUtxoProps: RgbppUtxoProps, ckbCollector: Collector): Promise<bitcoin.Psbt> {
