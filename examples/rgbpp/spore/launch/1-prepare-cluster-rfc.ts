@@ -33,7 +33,7 @@ const prepareClusterCell = async ({ btcTxId: _btcTxId, btcOutIdxStr }: { btcTxId
     },
   });
 
-  const tx = await rgbppClient.sporeClusterCreationCkbTx(CLUSTER_DATA, btcTxId, btcOutIdx);
+  const tx = await rgbppClient.sporeClusterPreparationCkbTx(CLUSTER_DATA, btcTxId, btcOutIdx);
   const { txHash } = await rgbppClient.signAndSendCkbTransaction(tx, {
     confirmations: 0,
     timeout: 60000,

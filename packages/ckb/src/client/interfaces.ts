@@ -13,6 +13,7 @@ import {
   BtcBatchTransferVirtualTxResult,
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
+  SporeVirtualTxResult,
 } from '../types';
 import { Collector } from '../collector';
 
@@ -116,12 +117,26 @@ export interface ICkbClient {
     btcTestnetType?: BTCTestnetType,
   ): Promise<CKBComponents.RawTransaction>;
 
-  sporeClusterCreationTx(
+  sporeClusterPreparationTx(
     clusterData: RawClusterData,
     btcTxId: string,
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
   ): Promise<ccc.Transaction>;
+
+  sporeClusterCreationTx(
+    clusterData: RawClusterData,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<SporeVirtualTxResult>;
+
+  assembleSporeClusterCreationTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction>;
 }
 
 export interface IRpcClient {
@@ -249,7 +264,25 @@ export interface IXudtTxBuilder {
 
 export interface ISporeTxBuilder {
   clusterCellCapacity(clusterData: RawClusterData): bigint;
-  clusterCreationTx(clusterData: RawClusterData, rgbppLockScript: ccc.Script): ccc.Transaction;
+
+  clusterPreparationTx(clusterData: RawClusterData, rgbppLockScript: ccc.Script): ccc.Transaction;
+
+  clusterCreationTx(
+    clusterData: RawClusterData,
+    collector: Collector,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+    witnessLockPlaceholderSize?: number,
+    feeRate?: bigint,
+  ): Promise<SporeVirtualTxResult>;
+
+  assembleClusterCreationCkbTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction>;
 
   creationTx(): Promise<void>;
   transferTx(): Promise<void>;

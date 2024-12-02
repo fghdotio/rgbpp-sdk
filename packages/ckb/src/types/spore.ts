@@ -29,6 +29,7 @@ export interface SporeVirtualTxResult {
   needPaymasterCell: boolean;
   // The ID of the cluster to be assigned to the spore. The cluster's ID is equivalent to the type script args of the cluster
   clusterId?: Hex;
+  btcOutIndex?: number;
 }
 
 export interface CreateSporeCkbVirtualTxParams {

@@ -94,7 +94,7 @@ export interface RgbppLaunchVirtualTxResult {
   commitment: Hex;
   // The needPaymasterCell indicates whether a paymaster cell is required
   needPaymasterCell: boolean;
-  btcOutIndex: number;
+  btcOutIndex?: number;
 }
 
 export interface AppendWitnessesParams {

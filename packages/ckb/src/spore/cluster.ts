@@ -20,6 +20,8 @@ import {
 import { NoRgbppLiveCellError } from '../error';
 import { bytesToHex, getTransactionSize } from '@nervosnetwork/ckb-sdk-utils';
 
+import { MAGIC_NUMBER_RGBPP_BTC_OUT_INDEX } from '../client/constants';
+
 /**
  * Generate the virtual ckb transaction for creating cluster
  * @param collector The collector that collects CKB live cells and transactions
@@ -58,7 +60,7 @@ export const genCreateClusterCkbVirtualTx = async ({
     {
       ...rgbppCell.output,
       // The BTC transaction Vouts[0] for OP_RETURN, Vouts[1] for cluster
-      lock: genRgbppLockScript(buildPreLockArgs(1), isMainnet, btcTestnetType),
+      lock: genRgbppLockScript(buildPreLockArgs(MAGIC_NUMBER_RGBPP_BTC_OUT_INDEX), isMainnet, btcTestnetType),
       type: {
         ...getClusterTypeScript(isMainnet),
         args: clusterId,
@@ -100,5 +102,6 @@ export const genCreateClusterCkbVirtualTx = async ({
     commitment,
     clusterId,
     needPaymasterCell: false,
+    btcOutIndex: MAGIC_NUMBER_RGBPP_BTC_OUT_INDEX,
   };
 };

@@ -26,6 +26,7 @@ import {
   BtcBatchTransferVirtualTxResult,
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
+  SporeVirtualTxResult,
 } from '../types';
 import { buildRgbppLockArgs, buildPreLockArgs } from '../utils';
 
@@ -57,7 +58,7 @@ export class CkbClient2 implements ICkbClient {
       isOnMainnet,
     );
     const xudtTxBuilder = new XudtCkbTxBuilder(isOnMainnet);
-    const sporePartialTxBuilder = new SporeCkbTxBuilder(rpcClient);
+    const sporePartialTxBuilder = new SporeCkbTxBuilder(isOnMainnet);
     const explorerBaseUrl = isOnMainnet ? 'https://explorer.nervos.org' : 'https://testnet.explorer.nervos.org';
 
     let jsonRpcUrl: string;
@@ -171,14 +172,14 @@ export class CkbClient2 implements ICkbClient {
     return tx;
   }
 
-  async sporeClusterCreationTx(
+  async sporeClusterPreparationTx(
     clusterData: RawClusterData,
     btcTxId: string,
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
   ): Promise<ccc.Transaction> {
     const rgbppLockScript = this.generateRgbppLockScript(btcOutIdx, btcTxId, btcTestnetType);
-    const tx = this.sporePartialTxBuilder.clusterCreationTx(clusterData, rgbppLockScript);
+    const tx = this.sporePartialTxBuilder.clusterPreparationTx(clusterData, rgbppLockScript);
 
     await tx.completeInputsByCapacity(this.getSigner(), 0, {
       scriptLenRange: [0, 1],
@@ -186,6 +187,30 @@ export class CkbClient2 implements ICkbClient {
     });
     await tx.completeFeeBy(this.getSigner());
     return tx;
+  }
+
+  async sporeClusterCreationTx(
+    clusterData: RawClusterData,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<SporeVirtualTxResult> {
+    return this.sporePartialTxBuilder.clusterCreationTx(
+      clusterData,
+      this.collector,
+      btcTxId,
+      btcOutIdx,
+      btcTestnetType,
+    );
+  }
+
+  async assembleSporeClusterCreationTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction> {
+    return this.sporePartialTxBuilder.assembleClusterCreationCkbTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
   }
 
   async assembleXudtIssuanceTx(

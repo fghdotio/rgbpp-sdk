@@ -75,8 +75,24 @@ export class RgbppClient2 {
     return this.ckbClient.xudtIssuancePreparationTx(tokenInfo, btcTxId, btcOutIdx, this.getBtcTestnetType());
   }
 
+  async sporeClusterPreparationCkbTx(clusterData: RawClusterData, btcTxId: string, btcOutIdx: number) {
+    return this.ckbClient.sporeClusterPreparationTx(clusterData, btcTxId, btcOutIdx, this.getBtcTestnetType());
+  }
+
   async sporeClusterCreationCkbTx(clusterData: RawClusterData, btcTxId: string, btcOutIdx: number) {
     return this.ckbClient.sporeClusterCreationTx(clusterData, btcTxId, btcOutIdx, this.getBtcTestnetType());
+  }
+
+  async assembleSporeClusterCreationCkbTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string | BtcTxHash,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
+    return this.ckbClient.assembleSporeClusterCreationTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
   }
 
   async assembleXudtIssuanceCkbTx(
