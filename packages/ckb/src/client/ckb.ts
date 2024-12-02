@@ -29,6 +29,7 @@ import {
   SporeVirtualTxResult,
   SporeCreateVirtualTxResult,
   IndexerCell,
+  SporeTransferVirtualTxResult,
 } from '../types';
 import { buildRgbppLockArgs, buildPreLockArgs } from '../utils';
 
@@ -258,6 +259,25 @@ export class CkbClient2 implements ICkbClient {
       this.privateKey,
       this.ckbAddress,
       ckbFeeRate,
+    );
+  }
+
+  async sporeTransferTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeArgs: string,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeTransferVirtualTxResult> {
+    return this.sporeTxBuilder.transferTx(
+      this.collector,
+      btcTxId,
+      btcOutIdx,
+      sporeTypeArgs,
+      btcTestnetType,
+      ckbFeeRate,
+      witnessLockPlaceholderSize,
     );
   }
 

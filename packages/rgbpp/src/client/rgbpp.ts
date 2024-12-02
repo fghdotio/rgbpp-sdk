@@ -150,6 +150,23 @@ export class RgbppClient2 {
     );
   }
 
+  async sporeTransferCkbTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeArgs: string,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ) {
+    return this.ckbClient.sporeTransferTx(
+      btcTxId,
+      btcOutIdx,
+      sporeTypeArgs,
+      this.getBtcTestnetType(),
+      ckbFeeRate,
+      witnessLockPlaceholderSize,
+    );
+  }
+
   async assembleXudtIssuanceCkbTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string | BtcTxHash,

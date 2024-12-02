@@ -45,15 +45,15 @@ const prepareClusterCell = async ({ btcTxId: _btcTxId, btcOutIdxStr }: { btcTxId
 const parseArgs = (btcTxId: string, btcOutIdxStr: string) => {
   const btcOutIdx = parseInt(btcOutIdxStr);
   if (isNaN(btcOutIdx)) {
-    throw new Error('RGBPP_XUDT_BTC_OUT_INDEX is not a number');
+    throw new Error('RGBPP_SPORE_BTC_OUT_INDEX is not a number');
   }
   return { btcTxId, btcOutIdx };
 };
 
 prepareClusterCell({
   // * Single-Use Seal
-  btcTxId: process.env.RGBPP_XUDT_BTC_TX_ID!,
-  btcOutIdxStr: process.env.RGBPP_XUDT_BTC_OUT_INDEX!,
+  btcTxId: process.env.RGBPP_SPORE_BTC_TX_ID!,
+  btcOutIdxStr: process.env.RGBPP_SPORE_BTC_OUT_INDEX!,
 })
   .then(() => {
     process.exit(0);

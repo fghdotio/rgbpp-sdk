@@ -15,6 +15,7 @@ import {
   BtcJumpCkbVirtualTxResult,
   SporeVirtualTxResult,
   SporeCreateVirtualTxResult,
+  SporeTransferVirtualTxResult,
   IndexerCell,
 } from '../types';
 import { Collector } from '../collector';
@@ -160,6 +161,15 @@ export interface ICkbClient {
     sumInputsCapacity: string,
     ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction>;
+
+  sporeTransferTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeArgs: string,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeTransferVirtualTxResult>;
 }
 
 export interface IRpcClient {
@@ -330,7 +340,16 @@ export interface ISporeTxBuilder {
     ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction>;
 
-  transferTx(): Promise<void>;
+  transferTx(
+    collector: Collector,
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeArgs: string,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeTransferVirtualTxResult>;
+
   leapFromBtcToCkbTx(): Promise<void>;
   leapFromCkbToBtcTx(): Promise<void>;
   btcTimeCellsSpentTx(): Promise<void>;

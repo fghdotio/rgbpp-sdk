@@ -71,7 +71,7 @@ const transferRgbppXudt = async (args: {
         clearInterval(interval);
         if (state === 'completed') {
           const ckbTxHash = await rgbppClient.getRgbppTransactionHash(susBtcTxId);
-          console.info(`RGB++ asset has been transferred on BTC and the related CKB tx is ${ckbTxHash}`);
+          console.info(`RGB++ xUDT has been transferred on BTC and the related CKB tx is ${ckbTxHash}`);
         } else {
           console.warn(`RGB++ CKB transaction failed: ${failedReason}`);
         }

@@ -118,7 +118,7 @@ const parseArgs = ({
 }) => {
   const btcOutIndex = parseInt(btcOutIdxStr);
   if (isNaN(btcOutIndex)) {
-    throw new Error('RGBPP_XUDT_BTC_OUT_INDEX is not a number');
+    throw new Error('RGBPP_SPORE_BTC_OUT_INDEX is not a number');
   }
   const receiverInfos = receivers.split(';').map((receiver) => {
     const [btcAddress, sporeContent] = receiver.split(':');
@@ -165,9 +165,9 @@ createSpores({
   // The cluster cell will be spent and the new cluster cell will be created in each spore creation tx,
   // so the cluster rgbpp lock args should be updated after each spore creation tx is completed.
   // The first cluster rgbpp lock args is from 2-create-cluster.ts and the new cluster rgbpp lock args can be found from the log in the line 71 of this file
-  btcTxId: process.env.RGBPP_XUDT_BTC_TX_ID!,
-  btcOutIdxStr: process.env.RGBPP_XUDT_BTC_OUT_INDEX!,
-  clusterId: process.env.RGBPP_XUDT_CLUSTER_ID!,
-  receivers: process.env.RGBPP_XUDT_RECEIVERS!,
+  btcTxId: process.env.RGBPP_SPORE_BTC_TX_ID!,
+  btcOutIdxStr: process.env.RGBPP_SPORE_BTC_OUT_INDEX!,
+  clusterId: process.env.RGBPP_SPORE_CLUSTER_ID!,
+  receivers: process.env.RGBPP_SPORE_RECEIVERS!,
   btcFeeRateStr: process.env.RGBPP_BTC_FEE_RATE,
 });

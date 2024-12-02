@@ -88,7 +88,7 @@ const createCluster = async ({
 const parseArgs = (btcTxId: string, btcOutIdxStr: string, btcFeeRateStr?: string) => {
   const btcOutIdx = parseInt(btcOutIdxStr);
   if (isNaN(btcOutIdx)) {
-    throw new Error('RGBPP_XUDT_BTC_OUT_INDEX is not a number');
+    throw new Error('RGBPP_SPORE_BTC_OUT_INDEX is not a number');
   }
   if (btcFeeRateStr) {
     try {
@@ -104,7 +104,7 @@ const parseArgs = (btcTxId: string, btcOutIdxStr: string, btcFeeRateStr?: string
 
 createCluster({
   // * Single-Use Seal
-  btcTxId: process.env.RGBPP_XUDT_BTC_TX_ID!,
-  btcOutIdxStr: process.env.RGBPP_XUDT_BTC_OUT_INDEX!,
+  btcTxId: process.env.RGBPP_SPORE_BTC_TX_ID!,
+  btcOutIdxStr: process.env.RGBPP_SPORE_BTC_OUT_INDEX!,
   btcFeeRateStr: process.env.RGBPP_BTC_FEE_RATE,
 });
