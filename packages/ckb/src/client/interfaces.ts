@@ -17,6 +17,7 @@ import {
   SporeCreateVirtualTxResult,
   SporeTransferVirtualTxResult,
   IndexerCell,
+  SporeLeapVirtualTxResult,
 } from '../types';
 import { Collector } from '../collector';
 
@@ -170,6 +171,16 @@ export interface ICkbClient {
     ckbFeeRate?: bigint,
     witnessLockPlaceholderSize?: number,
   ): Promise<SporeTransferVirtualTxResult>;
+
+  sporeLeapFromBtcToCkbTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeArgs: string,
+    toCkbAddress: string,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeLeapVirtualTxResult>;
 }
 
 export interface IRpcClient {
@@ -194,7 +205,9 @@ export interface ISigner {
 
 export interface IXudtTxBuilder {
   issuanceCellCapacity(tokenInfo: RgbppTokenInfo): bigint;
+
   generateXudtTypeScript(xudtTypeArgs: string): CKBComponents.Script;
+
   issuancePreparationTx(tokenInfo: RgbppTokenInfo, rgbppLockScript: ccc.Script): ccc.Transaction;
 
   assembleIssuanceTx(
@@ -298,6 +311,8 @@ export interface IXudtTxBuilder {
 export interface ISporeTxBuilder {
   clusterCellCapacity(clusterData: RawClusterData): bigint;
 
+  generateSporeTypeScript(sporeTypeArgs: string): CKBComponents.Script;
+
   clusterPreparationTx(clusterData: RawClusterData, rgbppLockScript: ccc.Script): ccc.Transaction;
 
   clusterCreationTx(
@@ -350,7 +365,17 @@ export interface ISporeTxBuilder {
     witnessLockPlaceholderSize?: number,
   ): Promise<SporeTransferVirtualTxResult>;
 
-  leapFromBtcToCkbTx(): Promise<void>;
+  leapFromBtcToCkbTx(
+    collector: Collector,
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeBytes: string,
+    toCkbAddress: string,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeLeapVirtualTxResult>;
+
   leapFromCkbToBtcTx(): Promise<void>;
   btcTimeCellsSpentTx(): Promise<void>;
 }

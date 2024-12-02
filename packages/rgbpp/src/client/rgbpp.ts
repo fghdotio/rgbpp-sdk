@@ -167,6 +167,25 @@ export class RgbppClient2 {
     );
   }
 
+  async sporeLeapFromBtcToCkbCkbTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeArgs: string,
+    toCkbAddress: string,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ) {
+    return this.ckbClient.sporeLeapFromBtcToCkbTx(
+      btcTxId,
+      btcOutIdx,
+      sporeTypeArgs,
+      toCkbAddress,
+      this.getBtcTestnetType(),
+      ckbFeeRate,
+      witnessLockPlaceholderSize,
+    );
+  }
+
   async assembleXudtIssuanceCkbTx(
     rawTx: CKBComponents.RawTransaction,
     btcTxId: string | BtcTxHash,

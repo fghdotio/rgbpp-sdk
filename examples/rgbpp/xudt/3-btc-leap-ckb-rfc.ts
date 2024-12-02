@@ -72,7 +72,7 @@ const leapXudtFromBtcToCKB = async (args: {
         clearInterval(interval);
         if (state === 'completed') {
           const ckbTxHash = await rgbppClient.getRgbppTransactionHash(susBtcTxId);
-          console.info(`RGB++ asset has been leaped from BTC to CKB and the related CKB tx is ${ckbTxHash}`);
+          console.info(`RGB++ xUDT has been leaped from BTC to CKB and the related CKB tx is ${ckbTxHash}`);
 
           const rgbppCkbTx = await updateCkbTxWithRealBtcTxId({
             ckbRawTx,

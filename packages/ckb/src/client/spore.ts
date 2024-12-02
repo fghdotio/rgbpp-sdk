@@ -10,6 +10,7 @@ import {
   genCreateSporeCkbVirtualTx,
   appendIssuerCellToSporesCreate,
   genTransferSporeCkbVirtualTx,
+  genLeapSporeFromBtcToCkbVirtualTx,
 } from '../spore';
 import { Collector } from '../collector';
 import {
@@ -18,6 +19,7 @@ import {
   SporeCreateVirtualTxResult,
   IndexerCell,
   SporeTransferVirtualTxResult,
+  SporeLeapVirtualTxResult,
 } from '../types';
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
 import { updateCkbTxWithRealBtcTxId, appendCkbTxWitnesses } from '../rgbpp';
@@ -145,7 +147,7 @@ export class SporeCkbTxBuilder implements ISporeTxBuilder {
     });
   }
 
-  genereateSporeTypeScript(sporeTypeArgs: string): CKBComponents.Script {
+  generateSporeTypeScript(sporeTypeArgs: string): CKBComponents.Script {
     return {
       ...getXudtTypeScript(this.isOnMainnet),
       args: sporeTypeArgs,
@@ -163,10 +165,7 @@ export class SporeCkbTxBuilder implements ISporeTxBuilder {
   ): Promise<SporeTransferVirtualTxResult> {
     const sporeRgbppLockArgs = buildRgbppLockArgs(btcOutIdx, btcTxId);
 
-    const sporeTypeBytes = serializeScript({
-      ...getXudtTypeScript(this.isOnMainnet),
-      args: sporeTypeArgs,
-    });
+    const sporeTypeBytes = serializeScript(this.generateSporeTypeScript(sporeTypeArgs));
 
     return genTransferSporeCkbVirtualTx({
       collector,
@@ -179,8 +178,30 @@ export class SporeCkbTxBuilder implements ISporeTxBuilder {
     });
   }
 
-  async leapFromBtcToCkbTx() {
-    throw new Error('Not implemented');
+  async leapFromBtcToCkbTx(
+    collector: Collector,
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeTypeArgs: string,
+    toCkbAddress: string,
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeLeapVirtualTxResult> {
+    const sporeRgbppLockArgs = buildRgbppLockArgs(btcOutIdx, btcTxId);
+
+    const sporeTypeBytes = serializeScript(this.generateSporeTypeScript(sporeTypeArgs));
+
+    return genLeapSporeFromBtcToCkbVirtualTx({
+      collector,
+      sporeRgbppLockArgs,
+      sporeTypeBytes,
+      toCkbAddress,
+      isMainnet: this.isOnMainnet,
+      btcTestnetType,
+      ckbFeeRate,
+      witnessLockPlaceholderSize,
+    });
   }
 
   async btcTimeCellsSpentTx() {
