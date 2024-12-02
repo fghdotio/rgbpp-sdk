@@ -12,13 +12,8 @@ import {
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
 } from '../types';
-import {
-  calculateRgbppCellCapacity,
-  calculateRgbppTokenInfoCellCapacity,
-  buildRgbppLockArgs,
-  buildPreLockArgs,
-} from '../utils';
-import { getRgbppLockScript, getXudtTypeScript, getSecp256k1CellDep, getBtcTimeLockScript } from '../constants';
+import { calculateRgbppCellCapacity, calculateRgbppTokenInfoCellCapacity, buildRgbppLockArgs } from '../utils';
+import { getXudtTypeScript, getSecp256k1CellDep, getBtcTimeLockScript } from '../constants';
 import {
   genRgbppLaunchCkbVirtualTx,
   updateCkbTxWithRealBtcTxId,
@@ -42,20 +37,6 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     return calculateRgbppCellCapacity() + calculateRgbppTokenInfoCellCapacity(tokenInfo, this.isOnMainnet);
   }
 
-  generateRgbppLockScript(btcOutIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType) {
-    let rgbppLockArgs: string;
-    if (btcTxId) {
-      rgbppLockArgs = buildRgbppLockArgs(btcOutIndex, btcTxId);
-    } else {
-      rgbppLockArgs = buildPreLockArgs(btcOutIndex);
-    }
-    const rgbppLockScript = getRgbppLockScript(this.isOnMainnet, btcTestnetType);
-    return ccc.Script.from({
-      ...rgbppLockScript,
-      args: rgbppLockArgs,
-    });
-  }
-
   generateXudtTypeScript(xudtTypeArgs: string): CKBComponents.Script {
     return {
       ...getXudtTypeScript(this.isOnMainnet),
@@ -63,18 +44,13 @@ export class XudtCkbTxBuilder implements IXudtTxBuilder {
     };
   }
 
-  issuancePreparationTx(
-    tokenInfo: RgbppTokenInfo,
-    btcTxId: string,
-    btcOutIdx: number,
-    btcTestnetType?: BTCTestnetType,
-  ): ccc.Transaction {
+  issuancePreparationTx(tokenInfo: RgbppTokenInfo, rgbppLockScript: ccc.Script): ccc.Transaction {
     const issuanceCellCapacity = this.issuanceCellCapacity(tokenInfo);
 
     const tx = ccc.Transaction.from({
       outputs: [
         {
-          lock: this.generateRgbppLockScript(btcOutIdx, btcTxId, btcTestnetType),
+          lock: rgbppLockScript,
           capacity: issuanceCellCapacity,
         },
       ],

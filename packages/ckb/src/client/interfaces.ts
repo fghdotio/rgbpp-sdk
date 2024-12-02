@@ -138,13 +138,8 @@ export interface ISigner {
 
 export interface IXudtTxBuilder {
   issuanceCellCapacity(tokenInfo: RgbppTokenInfo): bigint;
-  generateRgbppLockScript(btcOutIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType): ccc.Script;
-  issuancePreparationTx(
-    tokenInfo: RgbppTokenInfo,
-    btcTxId: string,
-    btcOutIdx: number,
-    btcTestnetType?: BTCTestnetType,
-  ): ccc.Transaction;
+  generateXudtTypeScript(xudtTypeArgs: string): CKBComponents.Script;
+  issuancePreparationTx(tokenInfo: RgbppTokenInfo, rgbppLockScript: ccc.Script): ccc.Transaction;
 
   assembleIssuanceTx(
     rawTx: CKBComponents.RawTransaction,

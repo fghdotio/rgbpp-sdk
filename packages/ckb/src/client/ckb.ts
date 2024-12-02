@@ -15,7 +15,7 @@ import { XudtCkbTxBuilder } from './xudt';
 import { SporePartialCkbTxBuilder } from './spore';
 import { CkbSigner } from './signer';
 
-import { CkbNetwork } from '../constants';
+import { CkbNetwork, getRgbppLockScript } from '../constants';
 import { Collector } from '../collector';
 import { sendCkbTx } from '../rgbpp';
 import {
@@ -26,6 +26,7 @@ import {
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
 } from '../types';
+import { buildRgbppLockArgs, buildPreLockArgs } from '../utils';
 
 export class CkbClient2 implements ICkbClient {
   constructor(
@@ -137,7 +138,17 @@ export class CkbClient2 implements ICkbClient {
   }
 
   generateRgbppLockScript(btcOutIndex: number, btcTxId?: string, btcTestnetType?: BTCTestnetType): ccc.Script {
-    return this.xudtTxBuilder.generateRgbppLockScript(btcOutIndex, btcTxId, btcTestnetType);
+    let rgbppLockArgs: string;
+    if (btcTxId) {
+      rgbppLockArgs = buildRgbppLockArgs(btcOutIndex, btcTxId);
+    } else {
+      rgbppLockArgs = buildPreLockArgs(btcOutIndex);
+    }
+    const rgbppLockScript = getRgbppLockScript(this.isOnMainnet(), btcTestnetType);
+    return ccc.Script.from({
+      ...rgbppLockScript,
+      args: rgbppLockArgs,
+    });
   }
 
   async xudtIssuancePreparationTx(
@@ -146,7 +157,9 @@ export class CkbClient2 implements ICkbClient {
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
   ): Promise<ccc.Transaction> {
-    const tx = this.xudtTxBuilder.issuancePreparationTx(tokenInfo, btcTxId, btcOutIdx, btcTestnetType);
+    const rgbppLockScript = this.generateRgbppLockScript(btcOutIdx, btcTxId, btcTestnetType);
+
+    const tx = this.xudtTxBuilder.issuancePreparationTx(tokenInfo, rgbppLockScript);
 
     await tx.completeInputsByCapacity(this.getSigner(), 0, {
       scriptLenRange: [0, 1],
