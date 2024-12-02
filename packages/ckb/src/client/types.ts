@@ -30,4 +30,4 @@ export type RgbppXudtIssuanceResult = {
   rgbppXudtUniqueId: string;
 };
 
-export type { RawClusterData } from '@spore-sdk/core';
+export type { RawClusterData, RawSporeData } from '@spore-sdk/core';

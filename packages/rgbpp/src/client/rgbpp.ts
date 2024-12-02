@@ -12,6 +12,8 @@ import {
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
   RawClusterData,
+  RawSporeData,
+  IndexerCell,
 } from '@rgbpp-sdk/ckb';
 
 import { IBtcClient, BtcClient2, bitcoin, RgbppUtxoProps, BtcTxHash } from '@rgbpp-sdk/btc';
@@ -79,8 +81,21 @@ export class RgbppClient2 {
     return this.ckbClient.sporeClusterPreparationTx(clusterData, btcTxId, btcOutIdx, this.getBtcTestnetType());
   }
 
-  async sporeClusterCreationCkbTx(clusterData: RawClusterData, btcTxId: string, btcOutIdx: number) {
-    return this.ckbClient.sporeClusterCreationTx(clusterData, btcTxId, btcOutIdx, this.getBtcTestnetType());
+  async sporeClusterCreationCkbTx(
+    clusterData: RawClusterData,
+    btcTxId: string,
+    btcOutIdx: number,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ) {
+    return this.ckbClient.sporeClusterCreationTx(
+      clusterData,
+      btcTxId,
+      btcOutIdx,
+      this.getBtcTestnetType(),
+      ckbFeeRate,
+      witnessLockPlaceholderSize,
+    );
   }
 
   async assembleSporeClusterCreationCkbTx(
@@ -93,6 +108,46 @@ export class RgbppClient2 {
       btcTxId = btcTxId.raw();
     }
     return this.ckbClient.assembleSporeClusterCreationTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+  }
+
+  async sporeCreationCkbTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeData: RawSporeData[],
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ) {
+    return this.ckbClient.sporeCreationTx(
+      btcTxId,
+      btcOutIdx,
+      sporeData,
+      this.getBtcTestnetType(),
+      ckbFeeRate,
+      witnessLockPlaceholderSize,
+    );
+  }
+
+  async assembleSporeCreationCkbTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string | BtcTxHash,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    clusterCell: IndexerCell,
+    sumInputsCapacity: string,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction> {
+    if (btcTxId instanceof BtcTxHash) {
+      btcTxId = btcTxId.raw();
+    }
+    return this.ckbClient.assembleSporeCreationTx(
+      rawTx,
+      btcTxId,
+      btcTxBytes,
+      rgbppApiSpvProof,
+      clusterCell,
+      sumInputsCapacity,
+      ckbFeeRate,
+    );
   }
 
   async assembleXudtIssuanceCkbTx(

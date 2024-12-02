@@ -6,7 +6,7 @@ import {
   scriptToAddress,
   systemScripts,
 } from '@nervosnetwork/ckb-sdk-utils';
-import { RawClusterData } from '@spore-sdk/core';
+import { RawClusterData, RawSporeData } from '@spore-sdk/core';
 
 import { RgbppApiSpvProof, BtcAssetsApi } from '@rgbpp-sdk/service';
 
@@ -27,6 +27,8 @@ import {
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
   SporeVirtualTxResult,
+  SporeCreateVirtualTxResult,
+  IndexerCell,
 } from '../types';
 import { buildRgbppLockArgs, buildPreLockArgs } from '../utils';
 
@@ -36,7 +38,7 @@ export class CkbClient2 implements ICkbClient {
     private readonly rpcClient: IRpcClient,
     private readonly signer: ISigner,
     private readonly xudtTxBuilder: IXudtTxBuilder,
-    private readonly sporePartialTxBuilder: ISporeTxBuilder,
+    private readonly sporeTxBuilder: ISporeTxBuilder,
     private explorerBaseUrl: string,
     private privateKey: string,
     private ckbAddress: string,
@@ -96,8 +98,8 @@ export class CkbClient2 implements ICkbClient {
     return this.xudtTxBuilder;
   }
 
-  getSporePartialTxBuilder() {
-    return this.sporePartialTxBuilder;
+  getSporeTxBuilder() {
+    return this.sporeTxBuilder;
   }
 
   isOnMainnet() {
@@ -179,7 +181,7 @@ export class CkbClient2 implements ICkbClient {
     btcTestnetType?: BTCTestnetType,
   ): Promise<ccc.Transaction> {
     const rgbppLockScript = this.generateRgbppLockScript(btcOutIdx, btcTxId, btcTestnetType);
-    const tx = this.sporePartialTxBuilder.clusterPreparationTx(clusterData, rgbppLockScript);
+    const tx = this.sporeTxBuilder.clusterPreparationTx(clusterData, rgbppLockScript);
 
     await tx.completeInputsByCapacity(this.getSigner(), 0, {
       scriptLenRange: [0, 1],
@@ -194,13 +196,17 @@ export class CkbClient2 implements ICkbClient {
     btcTxId: string,
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
+    feeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
   ): Promise<SporeVirtualTxResult> {
-    return this.sporePartialTxBuilder.clusterCreationTx(
+    return this.sporeTxBuilder.clusterCreationTx(
       clusterData,
       this.collector,
       btcTxId,
       btcOutIdx,
       btcTestnetType,
+      witnessLockPlaceholderSize,
+      feeRate,
     );
   }
 
@@ -210,7 +216,49 @@ export class CkbClient2 implements ICkbClient {
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
   ): Promise<CKBComponents.RawTransaction> {
-    return this.sporePartialTxBuilder.assembleClusterCreationCkbTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+    return this.sporeTxBuilder.assembleClusterCreationCkbTx(rawTx, btcTxId, btcTxBytes, rgbppApiSpvProof);
+  }
+
+  async sporeCreationTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeData: RawSporeData[],
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeCreateVirtualTxResult> {
+    return this.sporeTxBuilder.creationTx(
+      this.collector,
+      btcTxId,
+      btcOutIdx,
+      sporeData,
+      btcTestnetType,
+      ckbFeeRate,
+      witnessLockPlaceholderSize,
+    );
+  }
+
+  async assembleSporeCreationTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    clusterCell: IndexerCell,
+    sumInputsCapacity: string,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction> {
+    return this.sporeTxBuilder.assembleCreationTx(
+      rawTx,
+      btcTxId,
+      btcTxBytes,
+      rgbppApiSpvProof,
+      clusterCell,
+      sumInputsCapacity,
+      this.collector,
+      this.privateKey,
+      this.ckbAddress,
+      ckbFeeRate,
+    );
   }
 
   async assembleXudtIssuanceTx(

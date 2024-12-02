@@ -1,5 +1,5 @@
 import { ccc } from '@ckb-ccc/core';
-import { RawClusterData } from '@spore-sdk/core';
+import { RawClusterData, RawSporeData } from '@spore-sdk/core';
 
 import { RgbppApiSpvProof, BtcAssetsApi } from '@rgbpp-sdk/service';
 
@@ -14,6 +14,8 @@ import {
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
   SporeVirtualTxResult,
+  SporeCreateVirtualTxResult,
+  IndexerCell,
 } from '../types';
 import { Collector } from '../collector';
 
@@ -129,6 +131,8 @@ export interface ICkbClient {
     btcTxId: string,
     btcOutIdx: number,
     btcTestnetType?: BTCTestnetType,
+    feeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
   ): Promise<SporeVirtualTxResult>;
 
   assembleSporeClusterCreationTx(
@@ -136,6 +140,25 @@ export interface ICkbClient {
     btcTxId: string,
     btcTxBytes: string,
     rgbppApiSpvProof: RgbppApiSpvProof,
+  ): Promise<CKBComponents.RawTransaction>;
+
+  sporeCreationTx(
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeData: RawSporeData[],
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeCreateVirtualTxResult>;
+
+  assembleSporeCreationTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    clusterCell: IndexerCell,
+    sumInputsCapacity: string,
+    ckbFeeRate?: bigint,
   ): Promise<CKBComponents.RawTransaction>;
 }
 
@@ -284,7 +307,29 @@ export interface ISporeTxBuilder {
     rgbppApiSpvProof: RgbppApiSpvProof,
   ): Promise<CKBComponents.RawTransaction>;
 
-  creationTx(): Promise<void>;
+  creationTx(
+    collector: Collector,
+    btcTxId: string,
+    btcOutIdx: number,
+    sporeData: RawSporeData[],
+    btcTestnetType?: BTCTestnetType,
+    ckbFeeRate?: bigint,
+    witnessLockPlaceholderSize?: number,
+  ): Promise<SporeCreateVirtualTxResult>;
+
+  assembleCreationTx(
+    rawTx: CKBComponents.RawTransaction,
+    btcTxId: string,
+    btcTxBytes: string,
+    rgbppApiSpvProof: RgbppApiSpvProof,
+    clusterCell: IndexerCell,
+    sumInputsCapacity: string,
+    collector: Collector,
+    ckbPrivateKey: string,
+    issuerCkbAddress: string,
+    ckbFeeRate?: bigint,
+  ): Promise<CKBComponents.RawTransaction>;
+
   transferTx(): Promise<void>;
   leapFromBtcToCkbTx(): Promise<void>;
   leapFromCkbToBtcTx(): Promise<void>;
