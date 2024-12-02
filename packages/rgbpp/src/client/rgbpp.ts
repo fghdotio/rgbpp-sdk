@@ -11,6 +11,7 @@ import {
   BtcBatchTransferVirtualTxResult,
   BtcTransferVirtualTxResult,
   BtcJumpCkbVirtualTxResult,
+  RawClusterData,
 } from '@rgbpp-sdk/ckb';
 
 import { IBtcClient, BtcClient2, bitcoin, RgbppUtxoProps, BtcTxHash } from '@rgbpp-sdk/btc';
@@ -72,6 +73,10 @@ export class RgbppClient2 {
 
   async xudtIssuancePreparationCkbTx(tokenInfo: RgbppTokenInfo, btcTxId: string, btcOutIdx: number) {
     return this.ckbClient.xudtIssuancePreparationTx(tokenInfo, btcTxId, btcOutIdx, this.getBtcTestnetType());
+  }
+
+  async sporeClusterCreationCkbTx(clusterData: RawClusterData, btcTxId: string, btcOutIdx: number) {
+    return this.ckbClient.sporeClusterCreationTx(clusterData, btcTxId, btcOutIdx, this.getBtcTestnetType());
   }
 
   async assembleXudtIssuanceCkbTx(

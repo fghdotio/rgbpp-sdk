@@ -29,3 +29,5 @@ export type RgbppXudtIssuanceResult = {
   rgbppLaunchVirtualTxResult: RgbppLaunchVirtualTxResult;
   rgbppXudtUniqueId: string;
 };
+
+export type { RawClusterData } from '@spore-sdk/core';

@@ -1,4 +1,5 @@
 import { ccc } from '@ckb-ccc/core';
+import { RawClusterData } from '@spore-sdk/core';
 
 import { RgbppApiSpvProof, BtcAssetsApi } from '@rgbpp-sdk/service';
 
@@ -114,6 +115,13 @@ export interface ICkbClient {
     btcAssetsApi: BtcAssetsApi,
     btcTestnetType?: BTCTestnetType,
   ): Promise<CKBComponents.RawTransaction>;
+
+  sporeClusterCreationTx(
+    clusterData: RawClusterData,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<ccc.Transaction>;
 }
 
 export interface IRpcClient {
@@ -239,8 +247,10 @@ export interface IXudtTxBuilder {
   ): Promise<CKBComponents.RawTransaction>;
 }
 
-export interface ISporePartialTxBuilder {
-  createClusterTx(): Promise<void>;
+export interface ISporeTxBuilder {
+  clusterCellCapacity(clusterData: RawClusterData): bigint;
+  clusterCreationTx(clusterData: RawClusterData, rgbppLockScript: ccc.Script): ccc.Transaction;
+
   creationTx(): Promise<void>;
   transferTx(): Promise<void>;
   leapFromBtcToCkbTx(): Promise<void>;

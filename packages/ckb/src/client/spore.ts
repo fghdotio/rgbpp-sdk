@@ -1,12 +1,29 @@
 import { ccc } from '@ckb-ccc/core';
+import { RawClusterData } from '@spore-sdk/core';
 
-import { ISporePartialTxBuilder } from './interfaces';
+import { ISporeTxBuilder } from './interfaces';
 
-export class SporePartialCkbTxBuilder implements ISporePartialTxBuilder {
+import { calculateRgbppClusterCellCapacity } from '../utils';
+
+export class SporeCkbTxBuilder implements ISporeTxBuilder {
   constructor(private client: ccc.ClientPublicMainnet | ccc.ClientPublicTestnet) {}
 
-  async createClusterTx() {
-    throw new Error('Not implemented');
+  clusterCellCapacity(clusterData: RawClusterData): bigint {
+    return calculateRgbppClusterCellCapacity(clusterData);
+  }
+
+  clusterCreationTx(clusterData: RawClusterData, rgbppLockScript: ccc.Script): ccc.Transaction {
+    const clusterCellCapacity = this.clusterCellCapacity(clusterData);
+
+    const tx = ccc.Transaction.from({
+      outputs: [
+        {
+          lock: rgbppLockScript,
+          capacity: clusterCellCapacity,
+        },
+      ],
+    });
+    return tx;
   }
 
   async transferTx() {

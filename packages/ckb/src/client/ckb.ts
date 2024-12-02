@@ -6,13 +6,14 @@ import {
   scriptToAddress,
   systemScripts,
 } from '@nervosnetwork/ckb-sdk-utils';
+import { RawClusterData } from '@spore-sdk/core';
 
 import { RgbppApiSpvProof, BtcAssetsApi } from '@rgbpp-sdk/service';
 
-import { ICkbClient, IRpcClient, ISigner, IXudtTxBuilder, ISporePartialTxBuilder } from './interfaces';
+import { ICkbClient, IRpcClient, ISigner, IXudtTxBuilder, ISporeTxBuilder } from './interfaces';
 import { CkbWaitTransactionConfig, CkbTxHash, RgbppXudtIssuanceResult } from './types';
 import { XudtCkbTxBuilder } from './xudt';
-import { SporePartialCkbTxBuilder } from './spore';
+import { SporeCkbTxBuilder } from './spore';
 import { CkbSigner } from './signer';
 
 import { CkbNetwork, getRgbppLockScript } from '../constants';
@@ -34,7 +35,7 @@ export class CkbClient2 implements ICkbClient {
     private readonly rpcClient: IRpcClient,
     private readonly signer: ISigner,
     private readonly xudtTxBuilder: IXudtTxBuilder,
-    private readonly sporePartialTxBuilder: ISporePartialTxBuilder,
+    private readonly sporePartialTxBuilder: ISporeTxBuilder,
     private explorerBaseUrl: string,
     private privateKey: string,
     private ckbAddress: string,
@@ -56,7 +57,7 @@ export class CkbClient2 implements ICkbClient {
       isOnMainnet,
     );
     const xudtTxBuilder = new XudtCkbTxBuilder(isOnMainnet);
-    const sporePartialTxBuilder = new SporePartialCkbTxBuilder(rpcClient);
+    const sporePartialTxBuilder = new SporeCkbTxBuilder(rpcClient);
     const explorerBaseUrl = isOnMainnet ? 'https://explorer.nervos.org' : 'https://testnet.explorer.nervos.org';
 
     let jsonRpcUrl: string;
@@ -167,6 +168,23 @@ export class CkbClient2 implements ICkbClient {
     });
     await tx.completeFeeBy(this.getSigner());
 
+    return tx;
+  }
+
+  async sporeClusterCreationTx(
+    clusterData: RawClusterData,
+    btcTxId: string,
+    btcOutIdx: number,
+    btcTestnetType?: BTCTestnetType,
+  ): Promise<ccc.Transaction> {
+    const rgbppLockScript = this.generateRgbppLockScript(btcOutIdx, btcTxId, btcTestnetType);
+    const tx = this.sporePartialTxBuilder.clusterCreationTx(clusterData, rgbppLockScript);
+
+    await tx.completeInputsByCapacity(this.getSigner(), 0, {
+      scriptLenRange: [0, 1],
+      outputDataLenRange: [0, 1],
+    });
+    await tx.completeFeeBy(this.getSigner());
     return tx;
   }
 
