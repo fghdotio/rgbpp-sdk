@@ -101,6 +101,14 @@ export class BtcAssetsApi extends BtcAssetsApiBase implements BtcApis, RgbppApis
   }
 
   /**
+   * Dogecoin APIs, under the /doge/v1 prefix.
+   */
+
+  getDogeTransaction(txId: string) {
+    return this.request<BtcApiTransaction>(`/doge/v1/transaction/${txId}`);
+  }
+
+  /**
    * RGBPP APIs, under the /rgbpp/v1 prefix.
    */
 

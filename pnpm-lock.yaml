@@ -241,6 +241,39 @@ importers:
         specifier: 0.0.0-canary-66bbbfd-20240805132534
         version: 0.0.0-canary-66bbbfd-20240805132534
 
+  packages/doge:
+    dependencies:
+      '@bitcoinerlab/secp256k1':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@ckb-lumos/codec':
+        specifier: 0.22.2
+        version: 0.22.2
+      '@nervosnetwork/ckb-types':
+        specifier: 0.109.3
+        version: 0.109.3
+      '@rgbpp-sdk/ckb':
+        specifier: workspace:^
+        version: link:../ckb
+      '@rgbpp-sdk/service':
+        specifier: workspace:^
+        version: link:../service
+      bip32:
+        specifier: ^4.0.0
+        version: 4.0.0
+      bitcoinjs-lib:
+        specifier: ^6.1.5
+        version: 6.1.6
+      ecpair:
+        specifier: ^2.1.0
+        version: 2.1.0
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
+      p-limit:
+        specifier: ^3.1.0
+        version: 3.1.0
+
   packages/rgbpp:
     dependencies:
       '@ckb-lumos/base':
@@ -258,6 +291,9 @@ importers:
       '@rgbpp-sdk/ckb':
         specifier: workspace:*
         version: link:../ckb
+      '@rgbpp-sdk/doge':
+        specifier: workspace:*
+        version: link:../doge
       '@rgbpp-sdk/service':
         specifier: workspace:*
         version: link:../service

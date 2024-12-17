@@ -10,6 +10,7 @@ import { NetworkType, AddressType, DataSource } from 'rgbpp/btc';
 import { BtcAssetsApi } from 'rgbpp/service';
 import { BTCTestnetType, Collector } from 'rgbpp/ckb';
 import { createBtcAccount } from './shared/btc-account';
+import { DogeDataSource } from 'rgbpp';
 
 dotenv.config({ path: __dirname + '/.env' });
 
@@ -51,5 +52,6 @@ const addressType = process.env.BTC_ADDRESS_TYPE === 'P2TR' ? AddressType.P2TR :
 const networkType = isMainnet ? NetworkType.MAINNET : NetworkType.TESTNET;
 export const btcAccount = createBtcAccount(BTC_PRIVATE_KEY, addressType, networkType);
 
-export const btcService = BtcAssetsApi.fromToken(BTC_SERVICE_URL, BTC_SERVICE_TOKEN, BTC_SERVICE_ORIGIN);
-export const btcDataSource = new DataSource(btcService, networkType);
+export const assetsApi = BtcAssetsApi.fromToken(BTC_SERVICE_URL, BTC_SERVICE_TOKEN, BTC_SERVICE_ORIGIN);
+export const btcDataSource = new DataSource(assetsApi, networkType);
+export const dogeDataSource = new DogeDataSource(assetsApi, networkType);

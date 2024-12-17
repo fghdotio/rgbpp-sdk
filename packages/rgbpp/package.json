@@ -64,6 +64,7 @@
     "@nervosnetwork/ckb-sdk-utils": "0.109.3",
     "@rgbpp-sdk/btc": "workspace:*",
     "@rgbpp-sdk/ckb": "workspace:*",
+    "@rgbpp-sdk/doge": "workspace:*",
     "@rgbpp-sdk/service": "workspace:*"
   },
   "publishConfig": {

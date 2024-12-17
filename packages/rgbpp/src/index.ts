@@ -71,3 +71,8 @@ export { RgbppError, RgbppErrorCodes } from './rgbpp/error';
 export { buildRgbppTransferTx } from './rgbpp/xudt/btc-transfer';
 export { buildRgbppTransferAllTxs } from './rgbpp/xudt/btc-transfer-all';
 export { sendRgbppTxGroups } from './rgbpp/utils/transaction';
+
+/**
+ * doge
+ */
+export { sendRgbppDogeUtxos, DataSource as DogeDataSource } from '@rgbpp-sdk/doge';
