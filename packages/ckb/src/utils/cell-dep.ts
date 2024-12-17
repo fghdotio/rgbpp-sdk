@@ -69,6 +69,12 @@ export const fetchTypeIdCellDeps = async (
     }
   }
   let cellDeps: CKBComponents.CellDep[] = [];
+
+  const mockRgbppLockDep = {
+    outPoint: { txHash: '0x169898b2b4cef55371493a6940cc7cada05c9a41873ad0c2f22dfe31595a602f', index: '0x0' },
+    depType: 'code',
+  } as CKBComponents.CellDep;
+
   if (selected.rgbpp) {
     // RGB++ config cell is deployed together with the RGB++ lock contract
     //
@@ -78,7 +84,7 @@ export const fetchTypeIdCellDeps = async (
     //
     cellDeps = [
       ...cellDeps,
-      rgbppLockDep,
+      mockRgbppLockDep,
       {
         ...rgbppLockDep,
         outPoint: {

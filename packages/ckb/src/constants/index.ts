@@ -21,8 +21,8 @@ const TestnetInfo = {
   } as CKBComponents.CellDep,
 
   RgbppLockScript: {
-    codeHash: '0x61ca7a4796a4eb19ca4f0d065cb9b10ddcf002f10f7cbb810c706cb6bb5c3248',
-    hashType: 'type',
+    codeHash: '0xbe0375bba2b1620077d1121148d6373d10ff294598b87dbec8b74fa6d6a0542f',
+    hashType: 'data1',
     args: '',
   } as CKBComponents.Script,
 
