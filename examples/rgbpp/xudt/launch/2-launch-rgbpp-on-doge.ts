@@ -1,7 +1,7 @@
 import { genRgbppLaunchCkbVirtualTx, sendRgbppDogeUtxos } from 'rgbpp';
 import { buildRgbppLockArgs, RgbppTokenInfo } from 'rgbpp/ckb';
 import { RGBPP_TOKEN_INFO } from './0-rgbpp-token-info';
-import { BTC_TESTNET_TYPE, btcAccount, dogeDataSource, assetsApi, collector, isMainnet } from '../../env';
+import { BTC_TESTNET_TYPE, btcAccount, dogeDataSource, btcService as assetsApi, collector, isMainnet } from '../../env';
 import { saveCkbVirtualTxResult } from '../../shared/utils';
 import { signAndSendPsbt } from '../../shared/btc-account';
 
