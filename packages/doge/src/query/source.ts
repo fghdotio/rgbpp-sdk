@@ -69,7 +69,7 @@ export class DataSource {
   }
 
   async isTransactionConfirmed(hash: string): Promise<boolean> {
-    const tx = await this.service.getBtcTransaction(remove0x(hash));
+    const tx = await this.service.getDogeTransaction(remove0x(hash));
     return tx.status.confirmed;
   }
 

@@ -182,6 +182,7 @@ async function getMergedBtcOutputs(btcOutputs: InitOutput[], props: SendRgbppUtx
   merged.push(...btcOutputs);
 
   // Check paymaster info
+  // TODO deal with later
   const defaultPaymaster = await props.source.getPaymasterOutput();
   const isPaymasterUnmatched =
     defaultPaymaster?.address !== props.paymaster?.address || defaultPaymaster?.value !== props.paymaster?.value;

@@ -3,7 +3,7 @@ import { ErrorCodes, TxBuildError } from '../error';
 import { DataSource } from '../query/source';
 import { AddressType, AddressToPubkeyMap } from '../address';
 import { TxInput } from './build';
-import { limitPromiseBatchSize, remove0x, toXOnly } from '../utils';
+import { limitPromiseBatchSize, remove0x } from '../utils';
 import { isP2trScript } from '../script';
 
 export interface BaseOutput {
@@ -23,7 +23,7 @@ export interface Utxo extends Output {
 }
 
 export function utxoToInput(utxo: Utxo): TxInput {
-  if (utxo.addressType === AddressType.P2WPKH) {
+  if (utxo.addressType === AddressType.P2PKH) {
     const data = {
       hash: utxo.txid,
       index: utxo.vout,
@@ -33,24 +33,6 @@ export function utxoToInput(utxo: Utxo): TxInput {
       },
     };
 
-    return {
-      data,
-      utxo,
-    };
-  }
-  if (utxo.addressType === AddressType.P2TR) {
-    if (!utxo.pubkey) {
-      throw TxBuildError.withComment(ErrorCodes.MISSING_PUBKEY, utxo.address);
-    }
-    const data = {
-      hash: utxo.txid,
-      index: utxo.vout,
-      witnessUtxo: {
-        value: utxo.value,
-        script: Buffer.from(remove0x(utxo.scriptPk), 'hex'),
-      },
-      tapInternalKey: toXOnly(Buffer.from(remove0x(utxo.pubkey), 'hex')),
-    };
     return {
       data,
       utxo,

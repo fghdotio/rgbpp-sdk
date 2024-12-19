@@ -3,7 +3,6 @@ import { bitcoin } from '../bitcoin';
 export enum NetworkType {
   MAINNET,
   TESTNET,
-  REGTEST, // deprecated
 }
 
 export interface RgbppBtcConfig {

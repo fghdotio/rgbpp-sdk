@@ -6,14 +6,14 @@ import { NetworkType, RgbppBtcConfig } from './types';
 const defaultConfigs: Record<'testnet' | 'mainnet', RgbppBtcConfig> = {
   testnet: {
     feeRate: 1,
-    btcUtxoDustLimit: 1000,
+    btcUtxoDustLimit: 2000000,
     rgbppUtxoDustLimit: 546,
     network: bitcoin.networks.testnet,
     networkType: NetworkType.TESTNET,
   },
   mainnet: {
     feeRate: 20,
-    btcUtxoDustLimit: 10000,
+    btcUtxoDustLimit: 2000000,
     rgbppUtxoDustLimit: 546,
     network: bitcoin.networks.bitcoin,
     networkType: NetworkType.MAINNET,

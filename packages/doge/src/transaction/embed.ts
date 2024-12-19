@@ -58,11 +58,13 @@ export function opReturnScriptPubKeyToData(script: Buffer): Buffer {
  */
 export function isOpReturnScriptPubkey(script: Buffer): boolean {
   const scripts = bitcoin.script.decompile(script);
+  console.log(scripts, script.length);
   if (!scripts || scripts.length !== 2) {
     return false;
   }
 
   const [op, data] = scripts!;
+  console.log(op, data.toString());
   // OP_RETURN opcode is 0x6a in hex or 106 in integer
   if (op !== bitcoin.opcodes.OP_RETURN) {
     return false;

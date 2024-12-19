@@ -1,9 +1,8 @@
 import { AddressType } from '../address';
 import { NetworkType } from '../preset/types';
-import { toXOnly, tweakSigner } from '../utils';
 import { networkTypeToNetwork } from '../preset/network';
-import { isP2trScript, isP2wpkhScript } from '../script';
-import { ECPairInterface, bitcoin, ECPair, isTaprootInput } from '../bitcoin';
+import { isP2wpkhScript } from '../script';
+import { ECPairInterface, bitcoin, ECPair } from '../bitcoin';
 import { Utxo } from './utxo';
 
 interface FeeEstimateAccount {
@@ -21,8 +20,7 @@ export class FeeEstimator {
   private readonly keyPair: ECPairInterface;
   public readonly pubkey: string;
   public accounts: {
-    p2wpkh: FeeEstimateAccount;
-    p2tr: FeeEstimateAccount;
+    p2pkh: FeeEstimateAccount;
   };
 
   constructor(wif: string, networkType: NetworkType) {
@@ -38,23 +36,13 @@ export class FeeEstimator {
       pubkey: keyPair.publicKey,
       network,
     });
-    const p2tr = bitcoin.payments.p2tr({
-      internalPubkey: toXOnly(keyPair.publicKey),
-      network,
-    });
+
     this.accounts = {
-      p2wpkh: {
+      p2pkh: {
         payment: p2wpkh,
         address: p2wpkh.address!,
-        addressType: AddressType.P2WPKH,
+        addressType: AddressType.P2PKH,
         scriptPubkey: p2wpkh.output!.toString('hex'),
-      },
-      p2tr: {
-        payment: p2tr,
-        address: p2tr.address!,
-        addressType: AddressType.P2TR,
-        tapInternalKey: toXOnly(keyPair.publicKey),
-        scriptPubkey: p2tr.output!.toString('hex'),
       },
     };
   }
@@ -66,12 +54,8 @@ export class FeeEstimator {
   }
 
   replaceUtxo(utxo: Utxo): Utxo {
-    if (utxo.addressType === AddressType.P2WPKH || isP2wpkhScript(utxo.scriptPk)) {
-      utxo.scriptPk = this.accounts.p2wpkh.scriptPubkey;
-      utxo.pubkey = this.pubkey;
-    }
-    if (utxo.addressType === AddressType.P2TR || isP2trScript(utxo.scriptPk)) {
-      utxo.scriptPk = this.accounts.p2tr.scriptPubkey;
+    if (utxo.addressType === AddressType.P2PKH || isP2wpkhScript(utxo.scriptPk)) {
+      utxo.scriptPk = this.accounts.p2pkh.scriptPubkey;
       utxo.pubkey = this.pubkey;
     }
 
@@ -79,30 +63,8 @@ export class FeeEstimator {
   }
 
   async signPsbt(psbt: bitcoin.Psbt): Promise<bitcoin.Psbt> {
-    // Tweak signer for P2TR inputs
-    const tweakedSigner = tweakSigner(this.keyPair, {
-      network: this.network,
-    });
-
-    psbt.data.inputs.forEach((input, index) => {
-      // Fill tapInternalKey for P2TR inputs if missing
-      if (input.witnessUtxo) {
-        const isNotSigned = !(input.finalScriptSig || input.finalScriptWitness);
-        const isP2trInput = isP2trScript(input.witnessUtxo.script);
-        const lostInternalPubkey = !input.tapInternalKey;
-        if (isNotSigned && isP2trInput && lostInternalPubkey) {
-          if (input.witnessUtxo.script.toString('hex') === this.accounts.p2tr.scriptPubkey) {
-            input.tapInternalKey = this.accounts.p2tr.tapInternalKey!;
-          }
-        }
-      }
-
-      // Sign P2WPKH/P2TR inputs
-      if (isTaprootInput(input)) {
-        psbt.signInput(index, tweakedSigner);
-      } else {
-        psbt.signInput(index, this.keyPair);
-      }
+    psbt.data.inputs.forEach((_, index) => {
+      psbt.signInput(index, this.keyPair);
     });
 
     psbt.finalizeAllInputs();
