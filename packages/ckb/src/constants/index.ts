@@ -11,7 +11,7 @@ export const RGBPP_TX_INPUTS_MAX_LENGTH = 40;
 export const RGBPP_WITNESS_PLACEHOLDER = '0xFF';
 export const RGBPP_TX_ID_PLACEHOLDER = '0000000000000000000000000000000000000000000000000000000000000000';
 
-const TestnetInfo = {
+export const TestnetInfo = {
   Secp256k1LockDep: {
     outPoint: {
       txHash: '0xf8de3bb47d055cdf460d93a2a6e1b05f7432f9777c8c474abf4eec1d4aee5d37',
@@ -21,34 +21,34 @@ const TestnetInfo = {
   } as CKBComponents.CellDep,
 
   RgbppLockScript: {
-    codeHash: '0x61ca7a4796a4eb19ca4f0d065cb9b10ddcf002f10f7cbb810c706cb6bb5c3248',
+    codeHash: '0x52616e6badbb708be4ded222dc9fe5791b6bd0a5d518f7b5ab6cdee2f1868f95',
     hashType: 'type',
     args: '',
   } as CKBComponents.Script,
 
   RgbppLockDep: {
-    outPoint: { txHash: '0xf1de59e973b85791ec32debbba08dff80c63197e895eb95d67fc1e9f6b413e00', index: '0x0' },
+    outPoint: { txHash: '0x994f3addfc467aeddd77d55d2e836c6c2378db496c5963c4f8255f6c2bd6272a', index: '0x0' },
     depType: 'code',
   } as CKBComponents.CellDep,
 
   RgbppLockConfigDep: {
-    outPoint: { txHash: '0xf1de59e973b85791ec32debbba08dff80c63197e895eb95d67fc1e9f6b413e00', index: '0x1' },
+    outPoint: { txHash: '0x994f3addfc467aeddd77d55d2e836c6c2378db496c5963c4f8255f6c2bd6272a', index: '0x1' },
     depType: 'code',
   } as CKBComponents.CellDep,
 
   BtcTimeLockScript: {
-    codeHash: '0x00cdf8fab0f8ac638758ebf5ea5e4052b1d71e8a77b9f43139718621f6849326',
+    codeHash: '0x9b0280f33a20220def43b1beef5e60c8d0be604c6425fbf79cc04839db2572a0',
     hashType: 'type',
     args: '',
   } as CKBComponents.Script,
 
   BtcTimeLockDep: {
-    outPoint: { txHash: '0xde0f87878a97500f549418e5d46d2f7704c565a262aa17036c9c1c13ad638529', index: '0x0' },
+    outPoint: { txHash: '0xda0118575859c538cf6b432478463c45f975bd593c15366be3357ece73ae2b81', index: '0x0' },
     depType: 'code',
   } as CKBComponents.CellDep,
 
   BtcTimeLockConfigDep: {
-    outPoint: { txHash: '0xde0f87878a97500f549418e5d46d2f7704c565a262aa17036c9c1c13ad638529', index: '0x1' },
+    outPoint: { txHash: '0xda0118575859c538cf6b432478463c45f975bd593c15366be3357ece73ae2b81', index: '0x1' },
     depType: 'code',
   } as CKBComponents.CellDep,
 

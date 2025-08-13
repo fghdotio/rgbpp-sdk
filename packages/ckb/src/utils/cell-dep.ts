@@ -6,6 +6,7 @@ import {
   getUniqueTypeDep,
   getUtxoAirdropBadgeTypeDep,
   getXudtDep,
+  TestnetInfo,
 } from '../constants';
 import { BTCTestnetType } from '../types';
 
@@ -94,11 +95,11 @@ export const fetchTypeIdCellDeps = async (
 
   if (selected.rgbpp === true) {
     if (cellDepsObj?.rgbpp) {
-      const { signet, testnet, mainnet } = cellDepsObj.rgbpp;
+      const { signet, mainnet } = cellDepsObj.rgbpp;
       if (btcTestnetType === 'Signet') {
         rgbppLockDep = signet;
       } else {
-        rgbppLockDep = isMainnet ? mainnet : testnet;
+        rgbppLockDep = isMainnet ? mainnet : TestnetInfo.RgbppLockDep;
       }
     }
     // RGB++ config cell is deployed together with the RGB++ lock contract
@@ -122,11 +123,11 @@ export const fetchTypeIdCellDeps = async (
 
   if (selected.btcTime === true) {
     if (cellDepsObj?.btcTime) {
-      const { signet, testnet, mainnet } = cellDepsObj.btcTime;
+      const { signet, mainnet } = cellDepsObj.btcTime;
       if (btcTestnetType === 'Signet') {
         btcTimeDep = signet;
       } else {
-        btcTimeDep = isMainnet ? mainnet : testnet;
+        btcTimeDep = isMainnet ? mainnet : TestnetInfo.BtcTimeLockDep;
       }
     }
     // BTC Time config cell is deployed together with the BTC Time lock contract
