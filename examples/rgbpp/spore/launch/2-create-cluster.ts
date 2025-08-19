@@ -1,6 +1,6 @@
 import { BtcAssetsApiError, genCreateClusterCkbVirtualTx, sendRgbppUtxos } from 'rgbpp';
 import { isMainnet, collector, btcAccount, btcDataSource, btcService, BTC_TESTNET_TYPE } from '../../env';
-import { CLUSTER_DATA } from './0-cluster-info';
+
 import {
   appendCkbTxWitnesses,
   buildRgbppLockArgs,
@@ -11,12 +11,14 @@ import {
 import { saveCkbVirtualTxResult } from '../../shared/utils';
 import { signAndSendPsbt } from '../../shared/btc-account';
 
+import { clusterData } from '../../shared/dob';
+
 // Warning: Before runing this file, please run 1-prepare-cluster.ts
 const createCluster = async ({ ownerRgbppLockArgs }: { ownerRgbppLockArgs: string }) => {
   const ckbVirtualTxResult = await genCreateClusterCkbVirtualTx({
     collector,
     rgbppLockArgs: ownerRgbppLockArgs,
-    clusterData: CLUSTER_DATA,
+    clusterData,
     isMainnet,
     ckbFeeRate: BigInt(2000),
     btcTestnetType: BTC_TESTNET_TYPE,
@@ -39,7 +41,7 @@ const createCluster = async ({ ownerRgbppLockArgs }: { ownerRgbppLockArgs: strin
     from: btcAccount.from,
     fromPubkey: btcAccount.fromPubkey,
     source: btcDataSource,
-    feeRate: 30,
+    feeRate: 12,
   });
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(psbt, btcAccount, btcService);
@@ -86,5 +88,5 @@ const createCluster = async ({ ownerRgbppLockArgs }: { ownerRgbppLockArgs: strin
 
 // rgbppLockArgs: outIndexU32 + btcTxId
 createCluster({
-  ownerRgbppLockArgs: buildRgbppLockArgs(3, 'aee4e8e3aa95e9e9ab1f0520714031d92d3263262099dcc7f7d64e62fa2fcb44'),
+  ownerRgbppLockArgs: buildRgbppLockArgs(72, '5a5a6d9633bec2c299609dd31bd23fed0efc6f04befa0ae4629321524fe37558'),
 });

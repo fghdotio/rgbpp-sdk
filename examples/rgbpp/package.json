@@ -14,7 +14,8 @@
     "rgbpp": "workspace:*"
   },
   "devDependencies": {
-    "dotenv": "^16.4.5",
-    "@types/dotenv": "^8.2.0"
+    "@ckb-ccc/shell": "^1.1.11",
+    "@types/dotenv": "^8.2.0",
+    "dotenv": "^16.4.5"
   }
 }

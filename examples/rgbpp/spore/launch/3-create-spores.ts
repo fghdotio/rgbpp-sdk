@@ -21,10 +21,12 @@ import {
   remove0x,
   SporeCreateVirtualTxResult,
 } from 'rgbpp/ckb';
-import { utf8ToBuffer } from 'rgbpp/btc';
 import { saveCkbVirtualTxResult } from '../../shared/utils';
 import { signAndSendPsbt } from '../../shared/btc-account';
 import { serializeRawTransaction } from '@nervosnetwork/ckb-sdk-utils';
+
+import { ccc } from '@ckb-ccc/shell';
+import { generateSimpleDNA } from '../../shared/dob';
 
 const RECOMMENDED_MAX_CKB_TX_SIZE = 60 * 1024;
 
@@ -58,7 +60,6 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers }: SporeCreatePara
     sporeDataList: receivers.map((receiver) => receiver.sporeData),
     clusterRgbppLockArgs,
     isMainnet,
-    ckbFeeRate: BigInt(2000),
     btcTestnetType: BTC_TESTNET_TYPE,
   });
 
@@ -86,7 +87,7 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers }: SporeCreatePara
     from: btcAccount.from,
     fromPubkey: btcAccount.fromPubkey,
     source: btcDataSource,
-    feeRate: 120,
+    feeRate: 28,
   });
 
   const { txId: btcTxId, rawTxHex: btcTxBytes } = await signAndSendPsbt(psbt, btcAccount, btcService);
@@ -147,30 +148,28 @@ const createSpores = async ({ clusterRgbppLockArgs, receivers }: SporeCreatePara
 // BTC Testnet3: https://mempool.space/testnet
 // BTC Signet: https://mempool.space/signet
 
+const clusterId = '0xd808bf6aad33b51ceb00bb5f64f0f08ca5eab79e1b458d2b7e7f6af7e0daf0bf';
+
 // rgbppLockArgs: outIndexU32 + btcTxId
 createSpores({
   // The cluster cell will be spent and the new cluster cell will be created in each spore creation tx,
   // so the cluster rgbpp lock args should be updated after each spore creation tx is completed.
   // The first cluster rgbpp lock args is from 2-create-cluster.ts and the new cluster rgbpp lock args can be found from the log in the line 71 of this file
-  clusterRgbppLockArgs: buildRgbppLockArgs(1, '96bccaadd3c8f59b2411e3d64ae4c1743532415f953fc4f9741a5fd7a0a34483'),
-  receivers: [
-    {
-      toBtcAddress: 'tb1qhp9fh9qsfeyh0yhewgu27ndqhs5qlrqwau28m7',
+  clusterRgbppLockArgs: buildRgbppLockArgs(1, 'b6fda2bb1f8c3895ea0e340c772932e7019579ba18d6fe05d77157b638622044'),
+  receivers: Array(70)
+    .fill(null)
+    .map(() => ({
+      toBtcAddress: 'tb1qx00uz6cgxvxgr3k7gs93enh6j8vrljqwu7nv2f',
       sporeData: {
-        contentType: 'text/plain',
-        content: utf8ToBuffer('First Spore'),
-        // The cluster id is from 2-create-cluster.ts
-        clusterId: '0xbc5168a4f90116fada921e185d4b018e784dc0f6266e539a3c092321c932700a',
+        contentType: 'dob/0',
+        content: ccc.bytesFrom(`{ "dna": "${generateSimpleDNA(16)}" }`, 'utf8'),
+        clusterId,
       },
-    },
-    {
-      toBtcAddress: 'tb1qhp9fh9qsfeyh0yhewgu27ndqhs5qlrqwau28m7',
-      sporeData: {
-        contentType: 'text/plain',
-        content: utf8ToBuffer('Second Spore'),
-        // The cluster id is from 2-create-cluster.ts
-        clusterId: '0xbc5168a4f90116fada921e185d4b018e784dc0f6266e539a3c092321c932700a',
-      },
-    },
-  ],
+    })),
 });
+
+/* 
+create spore (3rd batch):
+- [BTC tx](https://mempool.space/testnet/tx/032e1f31f66b07e4aedcabd26968e5bddb5bdc4a2846cac19415534fcbff16b8)
+- [CKB tx](https://testnet.explorer.nervos.org/transaction/0x3cabd1a94c1b73147e27fa7dafe7e5cd7ab7e486a1db64fee5e84a9d1285b30a)
+*/
