@@ -93,6 +93,10 @@ export class BtcAssetsApi extends BtcAssetsApiBase implements BtcApis, RgbppApis
     return this.request<BtcApiTransaction>(`/bitcoin/v1/transaction/${txId}`);
   }
 
+  getBtcTransactionHex(txId: string) {
+    return this.request<{ hex: string }>(`/bitcoin/v1/transaction/${txId}/hex`);
+  }
+
   sendBtcTransaction(txHex: string) {
     return this.post<BtcApiSentTransaction>('/bitcoin/v1/transaction', {
       body: JSON.stringify({

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@nervosnetwork/ckb-sdk-utils": "0.109.5",
+    "bitcoinjs-lib": "^6.1.5",
     "rgbpp": "workspace:*"
   },
   "devDependencies": {

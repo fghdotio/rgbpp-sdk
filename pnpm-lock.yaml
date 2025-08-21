@@ -141,6 +141,9 @@ importers:
       '@nervosnetwork/ckb-sdk-utils':
         specifier: 0.109.5
         version: 0.109.5
+      bitcoinjs-lib:
+        specifier: ^6.1.5
+        version: 6.1.6
       rgbpp:
         specifier: workspace:*
         version: link:../../packages/rgbpp
