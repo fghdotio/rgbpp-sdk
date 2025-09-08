@@ -42,8 +42,8 @@ describe('rgbpp tests', () => {
       inputs: [
         {
           previousOutput: {
-            txHash: '0x047b6894a0b7a4d7a73b1503d1ae35c51fc5fa6306776dcf22b1fb3daaa32a29',
-            index: '0x0',
+            txHash: '0x67f808da27e1524291ce174db95e393114517b9260ad77b41e8154324aa14bd1',
+            index: '0x3',
           },
           since: '0x0',
         },
@@ -51,35 +51,35 @@ describe('rgbpp tests', () => {
       outputs: [
         {
           lock: {
-            codeHash: '0xd5a4e241104041f6f12f11bddcf30bd7b2f818722f78353fde019f5081cd6b49',
+            codeHash: '0x00cdf8fab0f8ac638758ebf5ea5e4052b1d71e8a77b9f43139718621f6849326',
             hashType: 'type',
-            args: '0x010000000000000000000000000000000000000000000000000000000000000000000000',
+            args: '0x7d00000010000000590000005d000000490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8011400000021e782eeb1c9893b341ed71c2dfe6fa496a6435c060000000000000000000000000000000000000000000000000000000000000000000000',
           },
-          capacity: '0x0000000000000000',
           type: {
-            codeHash: '0xc4957f239eb3db9f5c5fb949e9dd99adbb8068b8ac7fe7ae49495486d5e5d235',
+            codeHash: '0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb',
             hashType: 'type',
-            args: '0x43094caf2f2bcdf6f5ab02c2de744936897278d558a2b6924db98a4f27d629e2',
+            args: '0xda042bd1bb62a2bde0ba32a130f34906fcf4829cd497dfad84b6eab05d531a25',
           },
+          capacity: '0x5e3ff5d00',
         },
         {
           lock: {
-            codeHash: '0xd5a4e241104041f6f12f11bddcf30bd7b2f818722f78353fde019f5081cd6b49',
+            codeHash: '0x61ca7a4796a4eb19ca4f0d065cb9b10ddcf002f10f7cbb810c706cb6bb5c3248',
             hashType: 'type',
             args: '0x010000000000000000000000000000000000000000000000000000000000000000000000',
           },
-          capacity: '0x0000000000000000',
           type: {
-            codeHash: '0xc4957f239eb3db9f5c5fb949e9dd99adbb8068b8ac7fe7ae49495486d5e5d235',
+            codeHash: '0x25c29dc317811a6f6f3985a7a9ebc4838bd388d19d0feeecf0bcd60f6c0975bb',
             hashType: 'type',
-            args: '0x43094caf2f2bcdf6f5ab02c2de744936897278d558a2b6924db98a4f27d629e2',
+            args: '0xda042bd1bb62a2bde0ba32a130f34906fcf4829cd497dfad84b6eab05d531a25',
           },
+          capacity: '0x5e3ff5d00',
         },
       ],
-      outputsData: ['0x2c010000000000000000000000000000', '0xbc020000000000000000000000000000'],
+      outputsData: ['0xb80b0000000000000000000000000000', '0x48d5f505000000000000000000000000'],
     };
     const commitment = calculateCommitment(rgbppVirtualTx);
-    expect('7cdecc8cc293d491a0cbf44e92feabfc29e79408c1d2f7547b334c42efe13131').toBe(commitment);
+    expect('9472308eed1d8767b9081c18652b49173524d3eeb7de550431badbb6d0463461').toBe(commitment);
 
     const invalidRgbppVirtualTx: RgbppCkbVirtualTx = {
       inputs: new Array(300).fill({
@@ -96,7 +96,7 @@ describe('rgbpp tests', () => {
             hashType: 'type',
             args: '0x010000000000000000000000000000000000000000000000000000000000000000000000',
           },
-          capacity: '0x0000000000000000',
+          capacity: '0x485014eaeeb',
           type: {
             codeHash: '0xc4957f239eb3db9f5c5fb949e9dd99adbb8068b8ac7fe7ae49495486d5e5d235',
             hashType: 'type',
