@@ -284,7 +284,7 @@ export interface AppendIssuerCellToBtcBatchTransfer {
 }
 
 /**
- * @see {@link https://github.com/ckb-cell/unique-cell?tab=readme-ov-file#xudt-information} for the definition of xUDT information
+ * @see {@link https://github.com/RGBPlusPlus/unique-cell?tab=readme-ov-file#xudt-information} for the definition of xUDT information
  */
 export interface RgbppTokenInfo {
   // The number of decimals the RGBPP token uses
@@ -302,7 +302,7 @@ export interface RgbppLaunchCkbVirtualTxParams {
   ownerRgbppLockArgs: Address;
   // The total amount of RGBPP assets issued
   launchAmount: bigint;
-  // The RGBPP token info https://github.com/ckb-cell/unique-cell?tab=readme-ov-file#xudt-information
+  // The RGBPP token info https://github.com/RGBPlusPlus/unique-cell?tab=readme-ov-file#xudt-information
   rgbppTokenInfo: RgbppTokenInfo;
   // True is for BTC and CKB Mainnet, false is for BTC and CKB Testnet(see btcTestnetType for details about BTC Testnet)
   isMainnet: boolean;
