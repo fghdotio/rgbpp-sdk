@@ -150,7 +150,7 @@ export const calculateUdtCellCapacity = (lock: CKBComponents.Script, udtType?: C
   return BigInt(cellSize + 1) * CKB_UNIT;
 };
 
-// Unique Type Script: https://github.com/ckb-cell/unique-cell?tab=readme-ov-file#unique-type-script
+// Unique Type Script: https://github.com/RGBPlusPlus/unique-cell?tab=readme-ov-file#unique-type-script
 export const calculateXudtTokenInfoCellCapacity = (tokenInfo: RgbppTokenInfo, lock: CKBComponents.Script): bigint => {
   const lockSize = remove0x(lock.args).length / 2 + 33;
   const cellDataSize = remove0x(encodeRgbppTokenInfo(tokenInfo)).length / 2;
@@ -159,7 +159,7 @@ export const calculateXudtTokenInfoCellCapacity = (tokenInfo: RgbppTokenInfo, lo
   return BigInt(cellSize) * CKB_UNIT;
 };
 
-// Unique Type Script: https://github.com/ckb-cell/unique-cell?tab=readme-ov-file#unique-type-script
+// Unique Type Script: https://github.com/RGBPlusPlus/unique-cell?tab=readme-ov-file#unique-type-script
 export const calculateRgbppTokenInfoCellCapacity = (tokenInfo: RgbppTokenInfo, isMainnet: boolean): bigint => {
   const btcTimeLock = genBtcTimeLockScript(UNLOCKABLE_LOCK_SCRIPT, isMainnet);
   const lockSize = remove0x(btcTimeLock.args).length / 2 + 33;

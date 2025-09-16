@@ -116,7 +116,7 @@ export const assertOutputsCapacitySufficient = (
 
 // The maximum length of inputs and outputs is 255, and the field type representing the length in the RGB++ protocol is Uint8
 const MAX_RGBPP_CELL_NUM = 255;
-// refer to https://github.com/ckb-cell/rgbpp/blob/0c090b039e8d026aad4336395b908af283a70ebf/contracts/rgbpp-lock/src/main.rs#L173-L211
+// refer to https://github.com/RGBPlusPlus/rgbpp/blob/0c090b039e8d026aad4336395b908af283a70ebf/contracts/rgbpp-lock/src/main.rs#L173-L211
 export const calculateCommitment = (rgbppVirtualTx: RgbppCkbVirtualTx | CKBComponents.RawTransaction): Hex => {
   assertOutputsCapacitySufficient(rgbppVirtualTx);
 
