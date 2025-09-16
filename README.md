@@ -69,6 +69,9 @@ This repository offers utilities for Bitcoin and RGB++ asset integration.
 
 ## FAQ
 
+### How to access the Bitcoin/RGB++ Assets Service?
+See [Get a service URL](./packages/service/README.md#get-a-service-url)
+
 ### Where is the error code description for the RgbppLockScript?
 See [RGB++ Lock Script Error Codes](https://github.com/nervosnetwork/ckb-script-error-codes/blob/main/by-type-hash/bc6c568a1a0d0a09f6844dc9d74ddb4343c32143ff25f727c59edf4fb72d6936.md)
 
