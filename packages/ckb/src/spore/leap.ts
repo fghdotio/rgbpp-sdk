@@ -13,8 +13,11 @@ import {
   fetchTypeIdCellDeps,
   calculateTransactionFee,
   adjustVirtualTxForTxFee,
+  calculateRgbppSporeCellCapacity,
+  calculateCellOccupiedCapacity,
 } from '../utils';
 import {
+  IndexerCell,
   Hex,
   LeapSporeFromBtcToCkbVirtualTxParams,
   LeapSporeFromCkbToBtcVirtualTxParams,
@@ -24,6 +27,7 @@ import {
   RGBPP_TX_WITNESS_MAX_SIZE,
   RGBPP_WITNESS_PLACEHOLDER,
   getRgbppLockScript,
+  getSecp256k1CellDep,
   getSporeTypeDep,
 } from '../constants';
 import { NoRgbppLiveCellError } from '../error';
@@ -35,6 +39,7 @@ import {
   serializeOutPoint,
   serializeWitnessArgs,
 } from '@nervosnetwork/ckb-sdk-utils';
+import { unpackToRawSporeData } from '@spore-sdk/core';
 
 /**
  * Generate the virtual ckb transaction for leaping spore from BTC to CKB
@@ -76,16 +81,31 @@ export const genLeapSporeFromBtcToCkbVirtualTx = async ({
   ];
 
   const toLock = addressToScript(toCkbAddress);
-  const outputs: CKBComponents.CellOutput[] = [
-    {
-      ...sporeCell.output,
-      lock: genBtcTimeLockScript(toLock, isMainnet, btcTestnetType),
-    },
-  ];
+  const sporeOutput = {
+    ...sporeCell.output,
+    lock: genBtcTimeLockScript(toLock, isMainnet, btcTestnetType),
+  };
+
+  let needPaymasterCell = false;
+  let cellDeps: CKBComponents.CellDep[] = [];
+  if (
+    BigInt(sporeOutput.capacity) <=
+    calculateCellOccupiedCapacity({ output: sporeOutput, outputData: sporeCell.outputData } as IndexerCell)
+  ) {
+    needPaymasterCell = true;
+    // restore the capacity to be consistent (with margin)
+    sporeOutput.capacity = append0x(
+      calculateRgbppSporeCellCapacity(unpackToRawSporeData(sporeCell.outputData)).toString(16),
+    );
+    cellDeps.push(getSecp256k1CellDep(isMainnet));
+  }
+
+  const outputs: CKBComponents.CellOutput[] = [sporeOutput];
   const outputsData: Hex[] = [sporeCell.outputData];
-  const cellDeps = [
+  cellDeps = [
     ...(await fetchTypeIdCellDeps(isMainnet, { rgbpp: true }, btcTestnetType, vendorCellDeps)),
     getSporeTypeDep(isMainnet),
+    ...cellDeps,
   ];
   const sporeCoBuild = generateSporeTransferCoBuild([sporeCell], outputs);
   const witnesses = [RGBPP_WITNESS_PLACEHOLDER, sporeCoBuild];
@@ -100,13 +120,17 @@ export const genLeapSporeFromBtcToCkbVirtualTx = async ({
     witnesses,
   };
 
-  const {
-    needPaymasterCell,
-    outputs: adjustedOutputs,
-    cellDeps: adjustedCellDeps,
-  } = adjustVirtualTxForTxFee(ckbRawTx, isMainnet, witnessLockPlaceholderSize ?? RGBPP_TX_WITNESS_MAX_SIZE, ckbFeeRate);
-  ckbRawTx.outputs = adjustedOutputs;
-  ckbRawTx.cellDeps = adjustedCellDeps;
+  if (!needPaymasterCell) {
+    const txFeeAdjustedResult = adjustVirtualTxForTxFee(
+      ckbRawTx,
+      isMainnet,
+      witnessLockPlaceholderSize ?? RGBPP_TX_WITNESS_MAX_SIZE,
+      ckbFeeRate,
+    );
+    ckbRawTx.outputs = txFeeAdjustedResult.outputs;
+    ckbRawTx.cellDeps = txFeeAdjustedResult.cellDeps;
+    needPaymasterCell = txFeeAdjustedResult.needPaymasterCell;
+  }
 
   const virtualTx: RgbppCkbVirtualTx = {
     ...ckbRawTx,
