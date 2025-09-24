@@ -2,9 +2,7 @@ import { RgbppCkbVirtualTx, BtcJumpCkbVirtualTxParams, BtcJumpCkbVirtualTxResult
 import { TypeAssetNotSupportedError } from '../error';
 import {
   append0x,
-  calculateCellOccupiedCapacity,
   calculateRgbppCellCapacity,
-  calculateTransactionFee,
   deduplicateList,
   fetchTypeIdCellDeps,
   isLockArgsSizeExceeded,
@@ -22,11 +20,12 @@ import {
   isRgbppCapacitySufficientForChange,
   isStandardUDTTypeSupported,
   isOfflineMode,
+  adjustVirtualTxForTxFee,
 } from '../utils';
 import { Hex, IndexerCell } from '../types';
 import { RGBPP_WITNESS_PLACEHOLDER, getSecp256k1CellDep } from '../constants';
 import { blockchain } from '@ckb-lumos/base';
-import { addressToScript, getTransactionSize } from '@nervosnetwork/ckb-sdk-utils';
+import { addressToScript } from '@nervosnetwork/ckb-sdk-utils';
 
 /**
  * Generate the virtual ckb transaction for the jumping tx from BTC to CKB
@@ -99,31 +98,28 @@ export const genBtcJumpCkbVirtualTx = async ({
 
   let needPaymasterCell = false;
   const needRgbppChange = sumAmount > transferAmount;
+
   // To simplify, when the xUDT does not need change, all the capacity of the inputs will be given to the receiver
-  const candidateCapacity = needRgbppChange ? BigInt(rgbppTargetCells[0].output.capacity) : sumInputsCapacity;
+  const candidateReceiverOutputCapacity = needRgbppChange
+    ? BigInt(rgbppTargetCells[0].output.capacity)
+    : sumInputsCapacity;
+  const receiverOutputCapacity =
+    candidateReceiverOutputCapacity >= rgbppCellCapacity ? candidateReceiverOutputCapacity : rgbppCellCapacity;
 
-  const receiverLock = genBtcTimeLockScript(toLock, isMainnet, btcTestnetType, btcConfirmationBlocks);
-  const receiverData = append0x(u128ToLe(transferAmount));
-
-  const minRequiredCapacity = calculateCellOccupiedCapacity({
-    output: { lock: receiverLock, type: xudtType, capacity: '0x0' },
-    outputData: receiverData,
-  } as IndexerCell);
-
-  const receiverOutputCapacity = candidateCapacity > minRequiredCapacity ? candidateCapacity : minRequiredCapacity;
   // The BTC time cell does not need to be bound to the BTC UTXO
   const outputs: CKBComponents.CellOutput[] = [
     {
-      lock: receiverLock,
+      lock: genBtcTimeLockScript(toLock, isMainnet, btcTestnetType, btcConfirmationBlocks),
       type: xudtType,
       capacity: append0x(receiverOutputCapacity.toString(16)),
     },
   ];
-  const outputsData = [receiverData];
+  const outputsData = [append0x(u128ToLe(transferAmount))];
+
+  const isCapacitySufficient = isRgbppCapacitySufficientForChange(sumInputsCapacity, receiverOutputCapacity);
+  needPaymasterCell = !isCapacitySufficient;
 
   if (needRgbppChange) {
-    const isCapacitySufficient = isRgbppCapacitySufficientForChange(sumInputsCapacity, receiverOutputCapacity);
-    needPaymasterCell = !isCapacitySufficient;
     // When the capacity of inputs is enough for the outputs, the sender needs to recover the excess capacity.
     const udtChangeCapacity = isCapacitySufficient ? sumInputsCapacity - receiverOutputCapacity : rgbppCellCapacity;
     outputs.push({
@@ -188,25 +184,15 @@ export const genBtcJumpCkbVirtualTx = async ({
   };
 
   if (!needPaymasterCell) {
-    const txSize =
-      getTransactionSize(ckbRawTx) + (witnessLockPlaceholderSize ?? estimateWitnessSize(deduplicatedLockArgsList));
-    const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
-
-    // take tx fee into account to determine if paymaster cell is needed
-    const lastOutput = ckbRawTx.outputs[ckbRawTx.outputs.length - 1];
-    const lastOutputData = ckbRawTx.outputsData[ckbRawTx.outputs.length - 1] ?? '0x';
-    if (
-      BigInt(lastOutput.capacity) >=
-      estimatedTxFee + calculateCellOccupiedCapacity({ output: lastOutput, outputData: lastOutputData } as IndexerCell)
-    ) {
-      // tx fee is placed in the last output if no paymaster cell is needed
-      const changeCapacity = BigInt(outputs[outputs.length - 1].capacity) - estimatedTxFee;
-      ckbRawTx.outputs[ckbRawTx.outputs.length - 1].capacity = append0x(changeCapacity.toString(16));
-    } else {
-      // tx fee and change are handled by paymaster cell
-      needPaymasterCell = true;
-      ckbRawTx.cellDeps.push(getSecp256k1CellDep(isMainnet));
-    }
+    const txFeeAdjustedResult = adjustVirtualTxForTxFee(
+      ckbRawTx,
+      isMainnet,
+      witnessLockPlaceholderSize ?? estimateWitnessSize(deduplicatedLockArgsList),
+      ckbFeeRate,
+    );
+    needPaymasterCell = txFeeAdjustedResult.needPaymasterCell;
+    ckbRawTx.outputs = txFeeAdjustedResult.outputs;
+    ckbRawTx.cellDeps = txFeeAdjustedResult.cellDeps;
   }
 
   const virtualTx: RgbppCkbVirtualTx = {

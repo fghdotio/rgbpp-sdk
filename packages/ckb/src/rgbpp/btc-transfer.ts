@@ -28,6 +28,7 @@ import {
   signCkbTransaction,
   addressToScriptHash,
   isOfflineMode,
+  adjustVirtualTxForTxFee,
 } from '../utils';
 import { Hex, IndexerCell } from '../types';
 import {
@@ -143,7 +144,12 @@ export const genBtcTransferCkbVirtualTx = async ({
 
     const needRgbppChange = collectResult.sumAmount > transferAmount;
     // To simplify, when the xUDT does not need change, all the capacity of the inputs will be given to the receiver
-    const receiverOutputCapacity = needRgbppChange ? BigInt(rgbppTargetCells[0].output.capacity) : sumInputsCapacity;
+    const candidateReceiverOutputCapacity = needRgbppChange
+      ? BigInt(rgbppTargetCells[0].output.capacity)
+      : sumInputsCapacity;
+    const receiverOutputCapacity =
+      candidateReceiverOutputCapacity >= rgbppCellCapacity ? candidateReceiverOutputCapacity : rgbppCellCapacity;
+
     // The Vouts[0] for OP_RETURN and Vouts[1] for target transfer RGBPP assets
     outputs.push({
       lock: genRgbppLockScript(buildPreLockArgs(1), isMainnet, btcTestnetType),
@@ -152,9 +158,9 @@ export const genBtcTransferCkbVirtualTx = async ({
     });
     outputsData.push(append0x(u128ToLe(transferAmount)));
 
+    const isCapacitySufficient = isRgbppCapacitySufficientForChange(sumInputsCapacity, receiverOutputCapacity);
+    needPaymasterCell = !isCapacitySufficient;
     if (needRgbppChange) {
-      const isCapacitySufficient = isRgbppCapacitySufficientForChange(sumInputsCapacity, receiverOutputCapacity);
-      needPaymasterCell = !isCapacitySufficient;
       // When the capacity of inputs is enough for the outputs, the sender needs to recover the excess capacity.
       const udtChangeCapacity = isCapacitySufficient ? sumInputsCapacity - receiverOutputCapacity : rgbppCellCapacity;
       // The Vouts[2] for target change RGBPP assets
@@ -206,12 +212,15 @@ export const genBtcTransferCkbVirtualTx = async ({
   };
 
   if (!needPaymasterCell) {
-    const txSize =
-      getTransactionSize(ckbRawTx) + (witnessLockPlaceholderSize ?? estimateWitnessSize(deduplicatedLockArgsList));
-    const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
-
-    const changeCapacity = BigInt(outputs[outputs.length - 1].capacity) - estimatedTxFee;
-    ckbRawTx.outputs[ckbRawTx.outputs.length - 1].capacity = append0x(changeCapacity.toString(16));
+    const txFeeAdjustedResult = adjustVirtualTxForTxFee(
+      ckbRawTx,
+      isMainnet,
+      witnessLockPlaceholderSize ?? estimateWitnessSize(deduplicatedLockArgsList),
+      ckbFeeRate,
+    );
+    needPaymasterCell = txFeeAdjustedResult.needPaymasterCell;
+    ckbRawTx.outputs = txFeeAdjustedResult.outputs;
+    ckbRawTx.cellDeps = txFeeAdjustedResult.cellDeps;
   }
 
   const virtualTx: RgbppCkbVirtualTx = {

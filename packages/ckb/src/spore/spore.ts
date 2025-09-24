@@ -15,6 +15,7 @@ import {
   throwErrorWhenSporeCellsInvalid,
   addressToScriptHash,
   signCkbTransaction,
+  adjustVirtualTxForTxFee,
 } from '../utils';
 import {
   AppendIssuerCellToSporeCreate,
@@ -342,12 +343,13 @@ export const genTransferSporeCkbVirtualTx = async ({
     witnesses,
   };
 
-  let changeCapacity = BigInt(sporeCell.output.capacity);
-  const txSize = getTransactionSize(ckbRawTx) + (witnessLockPlaceholderSize ?? RGBPP_TX_WITNESS_MAX_SIZE);
-  const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
-  changeCapacity -= estimatedTxFee;
-
-  ckbRawTx.outputs[ckbRawTx.outputs.length - 1].capacity = append0x(changeCapacity.toString(16));
+  const {
+    needPaymasterCell,
+    outputs: adjustedOutputs,
+    cellDeps: adjustedCellDeps,
+  } = adjustVirtualTxForTxFee(ckbRawTx, isMainnet, witnessLockPlaceholderSize ?? RGBPP_TX_WITNESS_MAX_SIZE, ckbFeeRate);
+  ckbRawTx.outputs = adjustedOutputs;
+  ckbRawTx.cellDeps = adjustedCellDeps;
 
   const virtualTx: RgbppCkbVirtualTx = {
     ...ckbRawTx,
@@ -358,7 +360,7 @@ export const genTransferSporeCkbVirtualTx = async ({
     ckbRawTx,
     commitment,
     sporeCell,
-    needPaymasterCell: false,
+    needPaymasterCell,
     sumInputsCapacity: sporeCell.output.capacity,
   };
 };
