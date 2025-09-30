@@ -321,3 +321,14 @@ export interface RgbppLaunchCkbVirtualTxParams {
    */
   vendorCellDeps?: CellDepsObject;
 }
+
+/**
+ * Result of adjusting transaction for fee handling
+ */
+export interface TxFeeAdjustedResult {
+  needPaymasterCell: boolean;
+  /** Transaction outputs, potentially modified for fee deduction */
+  outputs: CKBComponents.CellOutput[];
+  /** Cell dependencies, potentially including paymaster cell dep */
+  cellDeps: CKBComponents.CellDep[];
+}

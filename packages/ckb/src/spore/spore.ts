@@ -1,5 +1,5 @@
 import { RgbppCkbVirtualTx } from '../types/rgbpp';
-import { packRawSporeData } from '@spore-sdk/core';
+import { packRawSporeData, unpackToRawSporeData } from '@spore-sdk/core';
 import {
   append0x,
   calculateRgbppSporeCellCapacity,
@@ -15,12 +15,15 @@ import {
   throwErrorWhenSporeCellsInvalid,
   addressToScriptHash,
   signCkbTransaction,
+  adjustVirtualTxForTxFee,
+  calculateCellOccupiedCapacity,
 } from '../utils';
 import {
   AppendIssuerCellToSporeCreate,
   BuildAppendingIssuerCellTxParams,
   CreateSporeCkbVirtualTxParams,
   Hex,
+  IndexerCell,
   SporeCreateVirtualTxResult,
   SporeTransferVirtualTxResult,
   TransferSporeCkbVirtualTxParams,
@@ -317,17 +320,32 @@ export const genTransferSporeCkbVirtualTx = async ({
     },
   ];
 
-  const outputs: CKBComponents.CellOutput[] = [
-    {
-      ...sporeCell.output,
-      // The BTC transaction Vouts[0] for OP_RETURN, Vouts[1] for spore
-      lock: genRgbppLockScript(buildPreLockArgs(1), isMainnet, btcTestnetType),
-    },
-  ];
+  const sporeOutput = {
+    ...sporeCell.output,
+    // The BTC transaction Vouts[0] for OP_RETURN, Vouts[1] for spore
+    lock: genRgbppLockScript(buildPreLockArgs(1), isMainnet, btcTestnetType),
+  };
+
+  let needPaymasterCell = false;
+  let cellDeps: CKBComponents.CellDep[] = [];
+  if (
+    BigInt(sporeOutput.capacity) <=
+    calculateCellOccupiedCapacity({ output: sporeOutput, outputData: sporeCell.outputData } as IndexerCell)
+  ) {
+    needPaymasterCell = true;
+    // restore the capacity to be consistent (with margin)
+    sporeOutput.capacity = append0x(
+      calculateRgbppSporeCellCapacity(unpackToRawSporeData(sporeCell.outputData)).toString(16),
+    );
+    cellDeps.push(getSecp256k1CellDep(isMainnet));
+  }
+
+  const outputs: CKBComponents.CellOutput[] = [sporeOutput];
   const outputsData: Hex[] = [sporeCell.outputData];
-  const cellDeps = [
+  cellDeps = [
     ...(await fetchTypeIdCellDeps(isMainnet, { rgbpp: true }, btcTestnetType, vendorCellDeps)),
     getSporeTypeDep(isMainnet),
+    ...cellDeps,
   ];
   const sporeCoBuild = generateSporeTransferCoBuild([sporeCell], outputs);
   const witnesses = [RGBPP_WITNESS_PLACEHOLDER, sporeCoBuild];
@@ -342,12 +360,17 @@ export const genTransferSporeCkbVirtualTx = async ({
     witnesses,
   };
 
-  let changeCapacity = BigInt(sporeCell.output.capacity);
-  const txSize = getTransactionSize(ckbRawTx) + (witnessLockPlaceholderSize ?? RGBPP_TX_WITNESS_MAX_SIZE);
-  const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
-  changeCapacity -= estimatedTxFee;
-
-  ckbRawTx.outputs[ckbRawTx.outputs.length - 1].capacity = append0x(changeCapacity.toString(16));
+  if (!needPaymasterCell) {
+    const txFeeAdjustedResult = adjustVirtualTxForTxFee(
+      ckbRawTx,
+      isMainnet,
+      witnessLockPlaceholderSize ?? RGBPP_TX_WITNESS_MAX_SIZE,
+      ckbFeeRate,
+    );
+    ckbRawTx.outputs = txFeeAdjustedResult.outputs;
+    ckbRawTx.cellDeps = txFeeAdjustedResult.cellDeps;
+    needPaymasterCell = txFeeAdjustedResult.needPaymasterCell;
+  }
 
   const virtualTx: RgbppCkbVirtualTx = {
     ...ckbRawTx,
@@ -358,7 +381,7 @@ export const genTransferSporeCkbVirtualTx = async ({
     ckbRawTx,
     commitment,
     sporeCell,
-    needPaymasterCell: false,
+    needPaymasterCell,
     sumInputsCapacity: sporeCell.output.capacity,
   };
 };
