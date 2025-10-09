@@ -288,14 +288,14 @@ exports[`RgbppXudt > buildRgbppTransferAllTxs() > 50 included cells, 41 excluded
                 "depType": "code",
                 "outPoint": {
                   "index": "0x0",
-                  "txHash": "0xf1de59e973b85791ec32debbba08dff80c63197e895eb95d67fc1e9f6b413e00",
+                  "txHash": "0x0d1567da0979f78b297d5311442669fbd1bd853c8be324c5ab6da41e7a1ed6e5",
                 },
               },
               {
                 "depType": "code",
                 "outPoint": {
                   "index": "0x1",
-                  "txHash": "0xf1de59e973b85791ec32debbba08dff80c63197e895eb95d67fc1e9f6b413e00",
+                  "txHash": "0x0d1567da0979f78b297d5311442669fbd1bd853c8be324c5ab6da41e7a1ed6e5",
                 },
               },
               {
@@ -809,14 +809,14 @@ exports[`RgbppXudt > buildRgbppTransferAllTxs() > 50 included cells, 41 excluded
                 "depType": "code",
                 "outPoint": {
                   "index": "0x0",
-                  "txHash": "0xf1de59e973b85791ec32debbba08dff80c63197e895eb95d67fc1e9f6b413e00",
+                  "txHash": "0x0d1567da0979f78b297d5311442669fbd1bd853c8be324c5ab6da41e7a1ed6e5",
                 },
               },
               {
                 "depType": "code",
                 "outPoint": {
                   "index": "0x1",
-                  "txHash": "0xf1de59e973b85791ec32debbba08dff80c63197e895eb95d67fc1e9f6b413e00",
+                  "txHash": "0x0d1567da0979f78b297d5311442669fbd1bd853c8be324c5ab6da41e7a1ed6e5",
                 },
               },
               {

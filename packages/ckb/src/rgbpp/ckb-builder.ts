@@ -87,6 +87,7 @@ export const appendPaymasterCellAndSignCkbTx = async ({
   ckbFeeRate,
 }: AppendPaymasterCellAndSignTxParams): Promise<CKBComponents.RawTransaction> => {
   const rawTx = ckbRawTx as CKBComponents.RawTransactionToSign;
+  const numOriginalInputs = rawTx.inputs.length;
   const paymasterInput = { previousOutput: paymasterCell.outPoint, since: '0x0' };
   rawTx.inputs = [...rawTx.inputs, paymasterInput];
   const inputsCapacity = BigInt(sumInputsCapacity) + BigInt(paymasterCell.output.capacity);
@@ -123,7 +124,11 @@ export const appendPaymasterCellAndSignCkbTx = async ({
   }));
 
   const emptyWitness = { lock: '', inputType: '', outputType: '' };
-  rawTx.witnesses = [...rawTx.witnesses, emptyWitness];
+  rawTx.witnesses = [
+    ...rawTx.witnesses.slice(0, numOriginalInputs),
+    emptyWitness,
+    ...rawTx.witnesses.slice(numOriginalInputs),
+  ];
 
   const transactionHash = rawTransactionToHash(rawTx);
   const signedWitnesses = signWitnesses(keyMap)({

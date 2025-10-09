@@ -28,20 +28,14 @@ $ pnpm add @rgbpp-sdk/service
 
 ### Get a service URL
 
-You can start using the `Bitcoin/RGB++ Assets Service` by accessing one of our deployed services. For those who prefer to deploy their own `Bitcoin/RGB++ Assets Service`, the documentation for deployment can be found at: [Deployment - ckb-cell/btc-assets-api](https://github.com/ckb-cell/btc-assets-api#deployment).
+You can start using the `Bitcoin/RGB++ Assets Service` by accessing one of our deployed services. For those who prefer to deploy their own `Bitcoin/RGB++ Assets Service`, the documentation for deployment can be found at: [Deployment - RGBPlusPlus/btc-assets-api](https://github.com/RGBPlusPlus/btc-assets-api#deployment).
 
-- Testnet: https://api.testnet.rgbpp.io
-- Signet: https://api.signet.rgbpp.io
+- Testnet: 
+  - https://api-testnet.rgbpp.com
+  - https://api.testnet.rgbpp.io
 - Mainnet: https://api.rgbpp.io
 
-### Get an access token
-
-You need an access token to interact with the service. The testnet/signet services are currently free to access, you can get an access token of the target network through the following documentation URLs:
-
-- Testnet: [/token/generate](https://api.testnet.rgbpp.io/docs/static/index.html#/Token/post_token_generate)
-- Signet: [/token/generate](https://api.signet.rgbpp.io/docs/static/index.html#/Token/post_token_generate)
-
-As to the mainnet service, it's currently limited to verified apps only. When your app development is ready on testnet, and requires a mainnet access token, please email us at `f@cell.studio` to request a mainnet JWT token. In the email, please provide the following information about your app:
+The testnet/signet services are currently public to access. As to the mainnet service, it's currently limited to verified apps only. When your app development is ready on testnet, and requires a mainnet access token, please email us at [buidl@rgbpp.com](mailto:buidl@rgbpp.com) to request a mainnet JWT token. In the email, please provide the following information about your app:
 
 - Name: Your app name, e.g. "rgbpp-app"
 - Domain: Your app domain, e.g. "rgbpp.app"

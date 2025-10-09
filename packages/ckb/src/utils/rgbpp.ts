@@ -1,6 +1,14 @@
 import { sha256 } from 'js-sha256';
 import { RgbppApiSpvProof } from '@rgbpp-sdk/service';
-import { BTCTestnetType, Hex, IndexerCell, RgbppCkbVirtualTx, RgbppTokenInfo, SpvClientCellTxProof } from '../types';
+import {
+  BTCTestnetType,
+  Hex,
+  IndexerCell,
+  RgbppCkbVirtualTx,
+  RgbppTokenInfo,
+  SpvClientCellTxProof,
+  TxFeeAdjustedResult,
+} from '../types';
 import { append0x, remove0x, reverseHex, u32ToLe, u8ToHex, utf8ToHex } from './hex';
 import {
   BTC_JUMP_CONFIRMATION_BLOCKS,
@@ -9,6 +17,7 @@ import {
   RGBPP_TX_WITNESS_MAX_SIZE,
   getBtcTimeLockScript,
   getRgbppLockScript,
+  getSecp256k1CellDep,
 } from '../constants';
 import { RGBPPLock } from '../schemas/generated/rgbpp';
 import { BTCTimeLock } from '../schemas/generated/rgbpp';
@@ -22,10 +31,17 @@ import {
   RgbppCkbTxInputsExceededError,
   RgbppUtxoBindMultiTypeAssetsError,
 } from '../error';
-import { calculateCellOccupiedCapacity, calculateRgbppCellCapacity, isScriptEqual, isUDTTypeSupported } from './ckb-tx';
+import {
+  calculateCellOccupiedCapacity,
+  calculateRgbppCellCapacity,
+  isScriptEqual,
+  isUDTTypeSupported,
+  calculateTransactionFee,
+} from './ckb-tx';
 import { blockchain } from '@ckb-lumos/base';
 import {
   bytesToHex,
+  getTransactionSize,
   hexToBytes,
   serializeOutPoint,
   serializeOutput,
@@ -100,7 +116,7 @@ export const assertOutputsCapacitySufficient = (
 
 // The maximum length of inputs and outputs is 255, and the field type representing the length in the RGB++ protocol is Uint8
 const MAX_RGBPP_CELL_NUM = 255;
-// refer to https://github.com/ckb-cell/rgbpp/blob/0c090b039e8d026aad4336395b908af283a70ebf/contracts/rgbpp-lock/src/main.rs#L173-L211
+// refer to https://github.com/RGBPlusPlus/rgbpp/blob/0c090b039e8d026aad4336395b908af283a70ebf/contracts/rgbpp-lock/src/main.rs#L173-L211
 export const calculateCommitment = (rgbppVirtualTx: RgbppCkbVirtualTx | CKBComponents.RawTransaction): Hex => {
   assertOutputsCapacitySufficient(rgbppVirtualTx);
 
@@ -339,4 +355,57 @@ export const isRgbppCapacitySufficientForChange = (
  */
 export const isOfflineMode = (vendorCellDeps: CellDepsObject | undefined) => {
   return vendorCellDeps === undefined;
+};
+
+/**
+ * Adjust virtual transaction for fee handling
+ *
+ * Determines whether to deduct fee from the last output or use a paymaster cell.
+ * If the last output has sufficient capacity, fee is deducted from it.
+ * Otherwise, a paymaster cell is required to handle the fee.
+ *
+ * @param ckbRawTx - The raw transaction to adjust
+ * @param isMainnet - Whether it's mainnet (affects cell deps)
+ * @param witnessSize - Size of witness data for fee calculation
+ * @param ckbFeeRate - Fee rate for transaction fee calculation
+ * @returns Result containing adjusted outputs, cell deps, and paymaster flag
+ */
+export const adjustVirtualTxForTxFee = (
+  ckbRawTx: CKBComponents.RawTransaction,
+  isMainnet: boolean,
+  witnessSize: number,
+  ckbFeeRate: bigint | undefined,
+): TxFeeAdjustedResult => {
+  const txSize = getTransactionSize(ckbRawTx) + witnessSize;
+  const estimatedTxFee = calculateTransactionFee(txSize, ckbFeeRate);
+
+  // take tx fee into account to determine if paymaster cell is needed
+  const lastOutput = ckbRawTx.outputs[ckbRawTx.outputs.length - 1];
+  const lastOutputData = ckbRawTx.outputsData[ckbRawTx.outputs.length - 1] ?? '0x';
+
+  if (
+    BigInt(lastOutput.capacity) <
+    estimatedTxFee + calculateCellOccupiedCapacity({ output: lastOutput, outputData: lastOutputData } as IndexerCell)
+  ) {
+    // tx fee and change are handled by paymaster cell
+    return {
+      needPaymasterCell: true,
+      outputs: [...ckbRawTx.outputs],
+      cellDeps: [...ckbRawTx.cellDeps, getSecp256k1CellDep(isMainnet)],
+    };
+  }
+
+  // tx fee is placed in the last output if no paymaster cell is needed
+  const changeCapacity = BigInt(lastOutput.capacity) - estimatedTxFee;
+  const modifiedOutputs = [...ckbRawTx.outputs];
+  modifiedOutputs[modifiedOutputs.length - 1] = {
+    ...lastOutput,
+    capacity: append0x(changeCapacity.toString(16)),
+  };
+
+  return {
+    needPaymasterCell: false,
+    outputs: modifiedOutputs,
+    cellDeps: [...ckbRawTx.cellDeps],
+  };
 };
