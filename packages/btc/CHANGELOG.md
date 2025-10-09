@@ -1,5 +1,13 @@
 # @rgbpp-sdk/btc
 
+## 0.7.2
+
+### Patch Changes
+
+- Updated dependencies [[`6cdfd5b`](https://github.com/utxostack/rgbpp-sdk/commit/6cdfd5bbe573af66ee97e01b3bf4bfd960c0fa5b), [`fc29a3a`](https://github.com/utxostack/rgbpp-sdk/commit/fc29a3aa5180924c04f88a15638528ea0ee3c7c2)]:
+  - @rgbpp-sdk/ckb@0.7.2
+  - @rgbpp-sdk/service@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes

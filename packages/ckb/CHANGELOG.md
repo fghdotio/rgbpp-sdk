@@ -1,5 +1,20 @@
 # @rgbpp-sdk/ckb
 
+## 0.7.2
+
+### Patch Changes
+
+- [`6cdfd5b`](https://github.com/utxostack/rgbpp-sdk/commit/6cdfd5bbe573af66ee97e01b3bf4bfd960c0fa5b): fix: ensure sufficient capacity when deducting tx fee from last output ([@fghdotio](https://github.com/fghdotio))
+
+Fix capacity validation when deducting transaction fees from the last output to prevent insufficient capacity errors.
+
+- [`fc29a3a`](https://github.com/utxostack/rgbpp-sdk/commit/fc29a3aa5180924c04f88a15638528ea0ee3c7c2): chore: update Testnet3 cell deps and test configurations ([@fghdotio](https://github.com/fghdotio))
+
+Update Testnet3 cell dependencies and test configurations for better testnet compatibility.
+
+- Updated dependencies []:
+  - @rgbpp-sdk/service@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes
