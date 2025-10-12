@@ -93,7 +93,7 @@ export const genLeapSporeFromBtcToCkbVirtualTx = async ({
     calculateCellOccupiedCapacity({ output: sporeOutput, outputData: sporeCell.outputData } as IndexerCell)
   ) {
     needPaymasterCell = true;
-    // restore the capacity to be consistent (with margin)
+    // restore the capacity, making the most of the paymaster cell
     sporeOutput.capacity = append0x(
       calculateRgbppSporeCellCapacity(unpackToRawSporeData(sporeCell.outputData)).toString(16),
     );
