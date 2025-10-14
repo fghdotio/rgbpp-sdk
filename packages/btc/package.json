@@ -1,6 +1,6 @@
 {
   "name": "@rgbpp-sdk/btc",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "scripts": {
     "test": "vitest",
     "build": "tsup",

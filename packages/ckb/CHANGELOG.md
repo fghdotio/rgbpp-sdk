@@ -1,5 +1,14 @@
 # @rgbpp-sdk/ckb
 
+## 0.7.3
+
+### Patch Changes
+
+- [`3740022`](https://github.com/utxostack/rgbpp-sdk/commit/3740022190bfacf13134ce4956297869de64eb24): Fix paymaster cell usage timing when leap/transfer xUDT without change. ([@fghdotio](https://github.com/fghdotio))
+
+- Updated dependencies []:
+  - @rgbpp-sdk/service@0.7.3
+
 ## 0.7.2
 
 ### Patch Changes
