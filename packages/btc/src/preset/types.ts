@@ -15,7 +15,7 @@ export interface RgbppBtcConfig {
   /**
    * The minimum satoshi amount that can be declared in a BTC_UTXO.
    * BTC_UTXOs with satoshi below this constant are considered dust and will not be collected/created.
-   * Officially, this constant should be 1,0000, but currently we are using 1,000 for testing purposes.
+   * Default is 1000 satoshis for both mainnet and testnet.
    */
   btcUtxoDustLimit: number;
   /**
