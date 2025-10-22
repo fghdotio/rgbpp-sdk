@@ -13,7 +13,7 @@ const defaultConfigs: Record<'testnet' | 'mainnet', RgbppBtcConfig> = {
   },
   mainnet: {
     feeRate: 20,
-    btcUtxoDustLimit: 10000,
+    btcUtxoDustLimit: 1000,
     rgbppUtxoDustLimit: 546,
     network: bitcoin.networks.bitcoin,
     networkType: NetworkType.MAINNET,
