@@ -194,6 +194,7 @@ export async function buildRgbppTransferAllTxs(params: RgbppTransferAllTxsParams
       feeRate: params.btc.feeRate,
       excludeUtxos: usedBtcUtxos,
       source: btcSource,
+      minUtxoSatoshi: params.btc.minUtxoSatoshi,
     });
 
     // Exclude used BTC UTXOs in the next BTC_TX

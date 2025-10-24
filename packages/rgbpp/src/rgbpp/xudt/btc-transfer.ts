@@ -53,6 +53,7 @@ export const buildRgbppTransferTx = async ({
     fromPubkey: btc.fromPubkey,
     source: btc.dataSource,
     feeRate: btc.feeRate,
+    minUtxoSatoshi: btc.minUtxoSatoshi,
   });
 
   return {

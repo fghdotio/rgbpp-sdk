@@ -37,6 +37,9 @@ export interface RgbppTransferBtcParams {
   feeRate?: number;
   // The Bitcoin Testnet type including Testnet3 and Signet, default value is Testnet3
   testnetType?: BTCTestnetType;
+
+  // The minimum satoshi amount that can be declared in a BTC_UTXO.
+  minUtxoSatoshi?: number;
 }
 
 export interface RgbppTransferTxParams {
@@ -94,6 +97,8 @@ export interface RgbppTransferAllTxsParams {
     // The BTC Testnet to use, supports "Testnet3" and "Signet", default value is "Testnet3",
     // the param helps find the targeting version of rgbpp-lock script on CKB Testnet
     testnetType?: BTCTestnetType;
+    // The minimum satoshi amount that can be declared in a BTC_UTXO.
+    minUtxoSatoshi?: number;
   };
   // True is for BTC and CKB Mainnet, false is for BTC Testnet3/Signet and CKB Testnet
   isMainnet: boolean;
