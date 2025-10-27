@@ -37,9 +37,9 @@ export interface CellDepsObject {
 const GITHUB_CELL_DEPS_JSON_URL =
   'https://raw.githubusercontent.com/utxostack/typeid-contract-cell-deps/main/deployment/cell-deps.json';
 
-const VERCEL_CELL_DEPS_JSON_STATIC_URL = 'https://typeid-contract-cell-deps.vercel.app/deployment/cell-deps.json';
+const VERCEL_CELL_DEPS_JSON_STATIC_URL = 'https://typeid-contract-cell-deps.rgbpp.com//deployment/cell-deps.json';
 
-const VERCEL_SERVER_CELL_DEPS_JSON_URL = 'https://typeid-contract-cell-deps.vercel.app/api/cell-deps';
+const VERCEL_SERVER_CELL_DEPS_JSON_URL = 'https://typeid-contract-cell-deps.rgbpp.com//api/cell-deps';
 
 const request = (url: string) => axios.get(url, { timeout: 10000 });
 
